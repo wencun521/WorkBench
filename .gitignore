@@ -51,5 +51,14 @@ coverage
 # Vite
 .vite
 
+# Python / 后端
+__pycache__/
+*.py[cod]
+*.pyo
+backend/app.db
+backend/*.db
+.venv/
+venv/
+
 # Misc
 *.tsbuildinfo

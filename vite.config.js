@@ -13,6 +13,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    open: true
+    open: true,
+    proxy: {
+      // 将 /api 开头的请求代理到 FastAPI 后端
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
   }
 })
