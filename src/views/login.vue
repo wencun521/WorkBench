@@ -329,8 +329,12 @@ const handleRegister = () => {
 }
 
 .tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   margin: 20px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #909399;
   text-align: center;
 }
