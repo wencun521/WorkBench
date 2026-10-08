@@ -39,6 +39,15 @@
             />
           </el-form-item>
 
+          <el-form-item prop="email">
+            <el-input
+              v-model.trim="registerForm.email"
+              placeholder="请输入邮箱"
+              :prefix-icon="Message"
+              clearable
+            />
+          </el-form-item>
+
           <el-form-item prop="password">
             <el-input
               v-model.trim="registerForm.password"
@@ -105,8 +114,8 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
-// import { registerApi } from '@/api/user'   // 换成你自己的接口
+import { User, Lock, Message } from '@element-plus/icons-vue'
+import { registerApi } from '@/api/user'
 
 const router = useRouter()
 
@@ -115,6 +124,7 @@ const loading = ref(false)
 
 const registerForm = reactive({
   username: '',
+  email: '',
   password: '',
   confirmPassword: '',
   agree: false
@@ -162,6 +172,14 @@ const rules = {
     { min: 3, max: 20, message: '用户名长度为 3 ~ 20 个字符', trigger: 'blur' },
     { pattern: /^[a-zA-Z0-9_]+$/, message: '仅支持字母、数字、下划线', trigger: 'blur' }
   ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    {
+      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: '邮箱格式不正确',
+      trigger: 'blur'
+    }
+  ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度为 6 ~ 20 个字符', trigger: 'blur' }
@@ -183,13 +201,12 @@ const handleRegister = async () => {
 
   loading.value = true
   try {
-    // ===== 替换为真实请求 =====
-    // await registerApi({
-    //   username: registerForm.username,
-    //   password: registerForm.password
-    // })
-    await new Promise((resolve) => setTimeout(resolve, 800)) // 模拟请求
-    // =========================
+    await registerApi({
+      username: registerForm.username,
+      email: registerForm.email,
+      password: registerForm.password,
+      confirmPassword: registerForm.confirmPassword
+    })
 
     ElMessage.success('注册成功，请登录')
     router.replace({

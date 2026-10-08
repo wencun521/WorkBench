@@ -83,7 +83,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { setToken } from '@/utils/auth'
-// import { loginApi } from '@/api/user'   // 换成你自己的接口
+import { loginApi } from '@/api/user'
 
 const router = useRouter()
 
@@ -131,15 +131,11 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    // ===== 替换为真实请求 =====
-    // const res = await loginApi({
-    //   username: loginForm.username,
-    //   password: loginForm.password
-    // })
-    // localStorage.setItem('token', res.data.token)
-    await new Promise((resolve) => setTimeout(resolve, 800)) // 模拟请求
-    setToken('mock-token-' + Date.now()) // TODO: 用真实接口返回的 token 替换
-    // =========================
+    const res = await loginApi({
+      username: loginForm.username,
+      password: loginForm.password
+    })
+    setToken(res.data.token)
 
     // 记住密码（生产环境建议只存用户名，token 由后端管理）
     if (loginForm.remember) {
