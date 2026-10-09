@@ -7,12 +7,15 @@ FastAPI 应用入口
 或：
     python run.py
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .database import engine, Base
-from .models import User  # noqa: F401  确保模型被注册
-from .routers import user_router
+from .models import User, Todo  # noqa: F401  确保模型被注册
+from .routers import user_router, todo_router
+from .deps import UnauthorizedError
+from .validators import BIZ_CODE
 
 # 创建所有表（首次启动时自动建表）
 Base.metadata.create_all(bind=engine)
@@ -30,6 +33,21 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(user_router)
+app.include_router(todo_router)
+
+
+# 认证失败：沿用「HTTP 恒 200 + code 表达业务结果」约定，
+# 前端 axios 拦截器按 code !== 0 统一处理，无需感知 401 状态码
+@app.exception_handler(UnauthorizedError)
+async def unauthorized_handler(request: Request, exc: UnauthorizedError):
+    return JSONResponse(
+        status_code=200,
+        content={
+            "code": BIZ_CODE["UNAUTHORIZED"],
+            "message": "未登录或登录已过期，请重新登录",
+            "data": None,
+        },
+    )
 
 
 @app.get("/health", tags=["system"])

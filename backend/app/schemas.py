@@ -18,6 +18,18 @@ class RegisterRequest(BaseModel):
     confirmPassword: str = Field(..., description="确认密码")
 
 
+# ---------- Todo ----------
+class TodoCreateRequest(BaseModel):
+    title: str = Field(..., description="待办标题")
+    note: str = Field("", description="备注（可选）")
+
+
+class TodoUpdateRequest(BaseModel):
+    title: str | None = Field(None, description="待办标题")
+    note: str | None = Field(None, description="备注")
+    completed: bool | None = Field(None, description="完成状态")
+
+
 # ---------- 统一响应 ----------
 class ApiResponse(BaseModel):
     code: int = 0

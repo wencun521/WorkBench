@@ -2,9 +2,10 @@
 数据模型
 
 User 表：id, username, password_hash, email, role, created_at
+Todo 表：id, user_id, title, note, completed, created_at
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Index
 
 from .database import Base
 
@@ -26,5 +27,28 @@ class User(Base):
             "username": self.username,
             "email": self.email,
             "role": self.role,
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Todo(Base):
+    __tablename__ = "todos"
+    __table_args__ = (
+        Index("ix_todos_user_created", "user_id", "created_at"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String(100), nullable=False)
+    note = Column(String(500), nullable=True, default="")
+    completed = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "note": self.note or "",
+            "completed": self.completed,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
         }

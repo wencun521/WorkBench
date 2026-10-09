@@ -16,6 +16,9 @@ BIZ_CODE = {
     "PASSWORD_INCORRECT": 40101,
     "USERNAME_EXISTS": 40901,
     "EMAIL_EXISTS": 40902,
+    "UNAUTHORIZED": 40100,
+    "TODO_TITLE_INVALID": 40005,
+    "TODO_NOT_FOUND": 40402,
 }
 
 # 校验规则
@@ -47,4 +50,13 @@ def validate_email(email: str) -> str:
         return "请输入邮箱"
     if not EMAIL_PATTERN.match(email):
         return "邮箱格式不正确"
+    return ""
+
+
+def validate_todo_title(title: str) -> str:
+    """Todo 标题校验：返回错误信息，空字符串表示校验通过。"""
+    if not title or not title.strip():
+        return "请输入待办标题"
+    if len(title.strip()) > 100:
+        return "待办标题不能超过 100 个字符"
     return ""

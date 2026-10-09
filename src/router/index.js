@@ -21,6 +21,12 @@ const routes = [
     meta: { title: '首页', requiresAuth: true }
   },
   {
+    path: '/todo',
+    name: 'Todo',
+    component: () => import('@/views/todo.vue'),
+    meta: { title: '待办事项', requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/404.vue'),
