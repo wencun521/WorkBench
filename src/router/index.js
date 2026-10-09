@@ -16,15 +16,22 @@ const routes = [
   },
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/views/home.vue'),
-    meta: { title: '首页', requiresAuth: true }
-  },
-  {
-    path: '/todo',
-    name: 'Todo',
-    component: () => import('@/views/todo.vue'),
-    meta: { title: '待办事项', requiresAuth: true }
+    component: () => import('@/layout/AdminLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('@/views/home.vue'),
+        meta: { title: '首页' }
+      },
+      {
+        path: 'todo',
+        name: 'Todo',
+        component: () => import('@/views/todo.vue'),
+        meta: { title: '待办事项' }
+      }
+    ]
   },
   {
     path: '/:pathMatch(.*)*',

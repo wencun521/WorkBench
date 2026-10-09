@@ -4,7 +4,6 @@
       <template #header>
         <div class="card-header">
           <span>待办事项</span>
-          <el-button @click="router.replace('/')">返回首页</el-button>
         </div>
       </template>
 
@@ -72,9 +71,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { removeToken } from '@/utils/auth'
 import {
   BIZ_CODE,
   listTodoApi,
@@ -82,8 +79,9 @@ import {
   updateTodoApi,
   deleteTodoApi
 } from '@/api/todo'
+import { useUnauthorizedHandler } from '@/composables/useAuth'
 
-const router = useRouter()
+const onUnauthorized = useUnauthorizedHandler()
 
 const loading = ref(false)
 const creating = ref(false)
@@ -94,13 +92,6 @@ const todoList = ref([])
 const editVisible = ref(false)
 const editForm = reactive({ id: null, title: '', note: '' })
 
-/* 认证过期统一处理：清 token 回登录页 */
-const handleUnauthorized = () => {
-  removeToken()
-  ElMessage.warning('登录已过期，请重新登录')
-  router.replace('/login')
-}
-
 const fetchList = async () => {
   loading.value = true
   try {
@@ -108,7 +99,7 @@ const fetchList = async () => {
     todoList.value = res.data.list
   } catch (err) {
     if (err.code === BIZ_CODE.UNAUTHORIZED) {
-      handleUnauthorized()
+      onUnauthorized()
       return
     }
     ElMessage.error(err.message || '加载待办失败')
@@ -131,7 +122,7 @@ const handleCreate = async () => {
     ElMessage.success('新增成功')
   } catch (err) {
     if (err.code === BIZ_CODE.UNAUTHORIZED) {
-      handleUnauthorized()
+      onUnauthorized()
       return
     }
     ElMessage.error(err.message || '新增失败')
@@ -146,7 +137,7 @@ const handleToggle = async (todo, completed) => {
     Object.assign(todo, res.data)
   } catch (err) {
     if (err.code === BIZ_CODE.UNAUTHORIZED) {
-      handleUnauthorized()
+      onUnauthorized()
       return
     }
     ElMessage.error(err.message || '更新失败')
@@ -180,7 +171,7 @@ const handleSaveEdit = async () => {
     ElMessage.success('保存成功')
   } catch (err) {
     if (err.code === BIZ_CODE.UNAUTHORIZED) {
-      handleUnauthorized()
+      onUnauthorized()
       return
     }
     ElMessage.error(err.message || '保存失败')
@@ -196,7 +187,7 @@ const handleDelete = async (todo) => {
     ElMessage.success('删除成功')
   } catch (err) {
     if (err.code === BIZ_CODE.UNAUTHORIZED) {
-      handleUnauthorized()
+      onUnauthorized()
       return
     }
     ElMessage.error(err.message || '删除失败')
@@ -213,15 +204,10 @@ onMounted(fetchList)
 
 <style scoped>
 .todo-page {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 40px 20px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 .todo-card {
-  width: 100%;
-  max-width: 640px;
   border-radius: 12px;
 }
 .card-header {
