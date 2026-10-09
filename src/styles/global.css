@@ -29,3 +29,34 @@ ul,
 ol {
   list-style: none;
 }
+
+/* 登录/注册页共用：全屏渐变背景容器 + 装饰光斑 */
+.auth-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(2px);
+}
+.circle-1 {
+  width: 420px;
+  height: 420px;
+  top: -140px;
+  left: -120px;
+}
+.circle-2 {
+  width: 320px;
+  height: 320px;
+  right: -100px;
+  bottom: -120px;
+}
