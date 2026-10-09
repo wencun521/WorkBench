@@ -124,6 +124,8 @@ const logout = useLogout()
 .collapse-btn {
   align-self: flex-end;
   color: #909399;
+  /* 去掉按钮自带水平内边距，使图标与下方退出图标右对齐 */
+  padding: 8px 0;
 }
 .sidebar.collapsed .collapse-btn {
   align-self: center;
@@ -132,7 +134,7 @@ const logout = useLogout()
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px;
+  padding: 0;
 }
 .sidebar.collapsed .user-area {
   flex-direction: column;
