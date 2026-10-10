@@ -8,11 +8,41 @@
         </div>
       </template>
 
+      <!-- 搜索 + 颜色筛选 -->
+      <div class="notes-toolbar">
+        <el-input
+          v-model="keyword"
+          class="search-input"
+          placeholder="搜索便签内容"
+          clearable
+          :prefix-icon="Search"
+        />
+        <div class="color-filter">
+          <span
+            class="filter-all"
+            :class="{ active: filterColor === '' }"
+            @click="filterColor = ''"
+          >全部</span>
+          <span
+            v-for="c in NOTE_COLORS"
+            :key="c.value"
+            class="filter-swatch"
+            :class="{ active: filterColor === c.value }"
+            :style="{ background: c.hex }"
+            :title="c.value"
+            @click="filterColor = filterColor === c.value ? '' : c.value"
+          />
+        </div>
+      </div>
+
       <div v-loading="loading" class="notes-list">
-        <el-empty v-if="!loading && noteList.length === 0" description="暂无便签，记录点文字吧" />
+        <el-empty
+          v-if="!loading && filteredNotes.length === 0"
+          :description="noteList.length === 0 ? '暂无便签，记录点文字吧' : '没有匹配的便签'"
+        />
         <div v-else class="notes-grid">
           <div
-            v-for="note in noteList"
+            v-for="note in filteredNotes"
             :key="note.id"
             class="note-item"
             :style="{ background: colorHex(note.color) }"
@@ -25,7 +55,12 @@
             >
               <Top />
             </el-icon>
-            <p class="note-content">{{ note.content }}</p>
+            <p class="note-content" :class="{ clamped: isClamped(note) }">{{ note.content }}</p>
+            <span
+              v-if="isLong(note)"
+              class="expand-link"
+              @click="toggleExpand(note)"
+            >{{ expandedIds.has(note.id) ? '收起' : '展开' }}</span>
             <div class="note-footer">
               <span class="note-time">{{ formatTime(note.createdAt) }}</span>
               <div class="note-actions">
@@ -42,13 +77,11 @@
                 <el-icon class="action-icon" :size="15" @click="openEdit(note)">
                   <EditPen />
                 </el-icon>
-                <el-popconfirm title="确定删除该便签吗？" @confirm="handleDelete(note)">
-                  <template #reference>
-                    <el-icon class="action-icon danger" :size="15">
-                      <Delete />
-                    </el-icon>
-                  </template>
-                </el-popconfirm>
+                <el-tooltip content="删除" placement="top">
+                  <el-icon class="action-icon danger" :size="15" @click="handleDelete(note)">
+                    <Delete />
+                  </el-icon>
+                </el-tooltip>
               </div>
             </div>
           </div>
@@ -89,9 +122,9 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, h, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Top, EditPen, Delete } from '@element-plus/icons-vue'
+import { Top, EditPen, Delete, Search } from '@element-plus/icons-vue'
 import {
   BIZ_CODE,
   NOTE_COLORS,
@@ -107,6 +140,32 @@ const onUnauthorized = useUnauthorizedHandler()
 const loading = ref(false)
 const saving = ref(false)
 const noteList = ref([])
+
+/* 搜索 + 颜色筛选 */
+const keyword = ref('')
+const filterColor = ref('')
+
+const filteredNotes = computed(() => {
+  const kw = keyword.value.trim().toLowerCase()
+  return noteList.value.filter((n) => {
+    if (kw && !n.content.toLowerCase().includes(kw)) return false
+    if (filterColor.value && n.color !== filterColor.value) return false
+    return true
+  })
+})
+
+/* 长内容折叠：超阈值可展开，默认收起（CSS 限 6 行） */
+const CLAMP_THRESHOLD = 120
+const expandedIds = ref(new Set())
+
+const isLong = (note) => note.content.length > CLAMP_THRESHOLD
+const isClamped = (note) => isLong(note) && !expandedIds.value.has(note.id)
+
+const toggleExpand = (note) => {
+  const next = new Set(expandedIds.value)
+  next.has(note.id) ? next.delete(note.id) : next.add(note.id)
+  expandedIds.value = next
+}
 
 const dialogVisible = ref(false)
 const editingId = ref(null)
@@ -198,19 +257,70 @@ const handleTogglePin = async (note) => {
   }
 }
 
-const handleDelete = async (note) => {
-  try {
-    await deleteNoteApi(note.id)
-    noteList.value = noteList.value.filter((n) => n.id !== note.id)
-    ElMessage.success('删除成功')
-  } catch (err) {
-    if (err.code === BIZ_CODE.UNAUTHORIZED) {
-      onUnauthorized()
-      return
+/* 删除撤销：先本地移除，5 秒后真正调删除接口；期间可撤销恢复 */
+const pendingTimers = new Map()
+const UNDO_WINDOW = 5000
+
+const handleDelete = (note) => {
+  const index = noteList.value.indexOf(note)
+  if (index === -1) return
+  noteList.value.splice(index, 1)
+
+  // 若已有同 id 的待删除任务，先清理
+  clearPending(note.id)
+
+  const msg = ElMessage({
+    type: 'success',
+    duration: UNDO_WINDOW,
+    message: h('span', null, [
+      '已删除便签',
+      h(
+        'a',
+        {
+          style: { color: '#409eff', marginLeft: '8px', cursor: 'pointer' },
+          onClick: () => undoDelete(note, index, msg)
+        },
+        '撤销'
+      )
+    ])
+  })
+
+  const timer = setTimeout(async () => {
+    pendingTimers.delete(note.id)
+    try {
+      await deleteNoteApi(note.id)
+    } catch (err) {
+      if (err.code === BIZ_CODE.UNAUTHORIZED) {
+        onUnauthorized()
+        return
+      }
+      // 删除失败：恢复到原位置
+      noteList.value.splice(Math.min(index, noteList.value.length), 0, note)
+      ElMessage.error(err.message || '删除失败，已恢复该便签')
     }
-    ElMessage.error(err.message || '删除失败')
+  }, UNDO_WINDOW)
+  pendingTimers.set(note.id, timer)
+}
+
+const undoDelete = (note, index, msg) => {
+  clearPending(note.id)
+  noteList.value.splice(Math.min(index, noteList.value.length), 0, note)
+  msg.close()
+}
+
+const clearPending = (id) => {
+  const timer = pendingTimers.get(id)
+  if (timer) {
+    clearTimeout(timer)
+    pendingTimers.delete(id)
   }
 }
+
+// 离开页面前取消尚未落库的删除（接口未调，数据无变化，无需恢复）
+onUnmounted(() => {
+  pendingTimers.forEach((timer) => clearTimeout(timer))
+  pendingTimers.clear()
+})
 
 const formatTime = (iso) => {
   if (!iso) return ''
@@ -238,12 +348,55 @@ onMounted(fetchList)
   font-weight: 600;
   color: #1f2329;
 }
+/* 搜索 + 筛选工具条 */
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.search-input {
+  width: 260px;
+}
+.color-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.filter-all {
+  font-size: 13px;
+  color: #909399;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.filter-all.active {
+  color: #409eff;
+  background: #ecf5ff;
+}
+.filter-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-sizing: content-box;
+  transition: transform 0.15s;
+}
+.filter-swatch:hover {
+  transform: scale(1.15);
+}
+.filter-swatch.active {
+  border-color: #409eff;
+}
 .notes-list {
   min-height: 160px;
 }
 .notes-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  /* 响应式：宽屏多列，窄屏自动减列 */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 .note-item {
@@ -263,7 +416,7 @@ onMounted(fetchList)
   color: #606266;
 }
 .note-content {
-  margin: 0 0 12px;
+  margin: 0 0 4px;
   font-size: 14px;
   line-height: 1.6;
   color: #303133;
@@ -271,10 +424,26 @@ onMounted(fetchList)
   word-break: break-word;
   padding-right: 20px;
 }
+/* 长内容折叠：最多显示 6 行 */
+.note-content.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
+}
+.expand-link {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #409eff;
+  cursor: pointer;
+}
 .note-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 4px;
 }
 .note-time {
   font-size: 12px;
