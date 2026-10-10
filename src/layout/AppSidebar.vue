@@ -24,6 +24,10 @@
         <el-icon><Tickets /></el-icon>
         <template #title>待办事项</template>
       </el-menu-item>
+      <el-menu-item index="/notes">
+        <el-icon><Memo /></el-icon>
+        <template #title>便签</template>
+      </el-menu-item>
     </el-menu>
 
     <!-- 底部：折叠按钮 + 用户区 -->
@@ -52,7 +56,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { HomeFilled, Tickets, Platform, Expand, Fold, SwitchButton } from '@element-plus/icons-vue'
+import { HomeFilled, Tickets, Memo, Platform, Expand, Fold, SwitchButton } from '@element-plus/icons-vue'
 import { useLogout } from '@/composables/useAuth'
 
 defineProps({

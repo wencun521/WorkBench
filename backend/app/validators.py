@@ -19,7 +19,12 @@ BIZ_CODE = {
     "UNAUTHORIZED": 40100,
     "TODO_TITLE_INVALID": 40005,
     "TODO_NOT_FOUND": 40402,
+    "NOTE_CONTENT_INVALID": 40006,
+    "NOTE_NOT_FOUND": 40403,
 }
+
+# 便签允许的颜色（与前端 notes.vue 的色板一致）
+NOTE_COLORS = ("yellow", "blue", "green", "pink")
 
 # 校验规则
 USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
@@ -59,4 +64,13 @@ def validate_todo_title(title: str) -> str:
         return "请输入待办标题"
     if len(title.strip()) > 100:
         return "待办标题不能超过 100 个字符"
+    return ""
+
+
+def validate_note_content(content: str) -> str:
+    """便签内容校验：返回错误信息，空字符串表示校验通过。"""
+    if not content or not content.strip():
+        return "请输入便签内容"
+    if len(content.strip()) > 500:
+        return "便签内容不能超过 500 个字符"
     return ""

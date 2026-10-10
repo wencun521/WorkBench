@@ -3,6 +3,7 @@
 
 User 表：id, username, password_hash, email, role, created_at
 Todo 表：id, user_id, title, note, completed, created_at
+Note 表：id, user_id, content, color, pinned, created_at
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Index
@@ -50,5 +51,28 @@ class Todo(Base):
             "title": self.title,
             "note": self.note or "",
             "completed": self.completed,
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Note(Base):
+    __tablename__ = "notes"
+    __table_args__ = (
+        Index("ix_notes_user_created", "user_id", "created_at"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content = Column(String(500), nullable=False)
+    color = Column(String(10), nullable=False, default="yellow")
+    pinned = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "content": self.content,
+            "color": self.color,
+            "pinned": self.pinned,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
         }

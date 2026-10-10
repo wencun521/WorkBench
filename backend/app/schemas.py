@@ -30,6 +30,18 @@ class TodoUpdateRequest(BaseModel):
     completed: bool | None = Field(None, description="完成状态")
 
 
+# ---------- Note ----------
+class NoteCreateRequest(BaseModel):
+    content: str = Field(..., description="便签内容")
+    color: str = Field("yellow", description="便签颜色")
+
+
+class NoteUpdateRequest(BaseModel):
+    content: str | None = Field(None, description="便签内容")
+    color: str | None = Field(None, description="便签颜色")
+    pinned: bool | None = Field(None, description="置顶状态")
+
+
 # ---------- 统一响应 ----------
 class ApiResponse(BaseModel):
     code: int = 0

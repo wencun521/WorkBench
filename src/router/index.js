@@ -30,6 +30,12 @@ const routes = [
         name: 'Todo',
         component: () => import('@/views/todo.vue'),
         meta: { title: '待办事项' }
+      },
+      {
+        path: 'notes',
+        name: 'Notes',
+        component: () => import('@/views/notes.vue'),
+        meta: { title: '便签' }
       }
     ]
   },

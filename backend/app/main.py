@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .database import engine, Base
-from .models import User, Todo  # noqa: F401  确保模型被注册
-from .routers import user_router, todo_router
+from .models import User, Todo, Note  # noqa: F401  确保模型被注册
+from .routers import user_router, todo_router, note_router
 from .deps import UnauthorizedError
 from .validators import BIZ_CODE
 
@@ -34,6 +34,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(user_router)
 app.include_router(todo_router)
+app.include_router(note_router)
 
 
 # 认证失败：沿用「HTTP 恒 200 + code 表达业务结果」约定，
