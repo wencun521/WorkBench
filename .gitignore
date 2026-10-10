@@ -57,6 +57,7 @@ __pycache__/
 *.pyo
 backend/app.db
 backend/*.db
+backend/app/*.db
 .venv/
 venv/
 
