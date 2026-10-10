@@ -1,0 +1,49 @@
+# Admin Pro
+
+轻量级全栈后台管理系统 —— Vue 3 + FastAPI + SQLite。
+
+![version](https://img.shields.io/badge/version-0.1.0-blue) ![vue](https://img.shields.io/badge/Vue-3.5-42b883) ![fastapi](https://img.shields.io/badge/FastAPI-latest-009688) ![license](https://img.shields.io/badge/license-private-lightgrey)
+
+## 功能一览
+
+- **用户认证**：注册 / 登录，JWT 认证，bcrypt 密码哈希
+- **待办事项**：增删改查 + 完成状态，数据按用户隔离
+- **便签**：彩色便签 + 置顶，随手记录文字
+- **后台布局**：可折叠侧边栏 + 主内容区，新页面即插即用
+- **首页概览**：待办统计卡片
+
+## 技术栈
+
+| 端 | 技术 |
+|----|------|
+| 前端 | Vue 3 · Vite 5 · Element Plus · vue-router 4 · axios |
+| 后端 | FastAPI · SQLAlchemy · SQLite · JWT (python-jose) · bcrypt |
+
+## 快速开始
+
+```bash
+# 后端（端口 8000）
+cd backend
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\python run.py
+
+# 前端（端口 5173，/api 自动代理到 8000）
+npm install
+npm run dev
+```
+
+访问 `http://localhost:5173`，注册账号即可体验。
+
+## 文档
+
+完整的架构说明、目录索引、接口清单（含错误码表）、部署与维护规范，请查阅 **[项目主文档 HANDBOOK](./docs/HANDBOOK.md)**；各功能规格与优化计划见 [docs/](./docs/) 目录。
+
+## 项目结构
+
+```
+├─ docs/       # 项目文档（HANDBOOK.md 为主文档入口）
+├─ backend/    # FastAPI 后端（routers / models / crud / auth ...）
+├─ src/        # Vue 3 前端（views / layout / api / composables ...）
+└─ public/     # 静态资源
+```
