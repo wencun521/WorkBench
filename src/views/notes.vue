@@ -39,13 +39,17 @@
         <el-empty
           v-if="!loading && filteredNotes.length === 0"
           :description="noteList.length === 0 ? '暂无便签，记录点文字吧' : '没有匹配的便签'"
-        />
+        >
+          <el-button v-if="noteList.length === 0" type="primary" @click="openCreate">新建便签</el-button>
+        </el-empty>
         <div v-else class="notes-grid">
           <div
             v-for="note in filteredNotes"
             :key="note.id"
             class="note-item"
             :style="{ background: colorHex(note.color) }"
+            :title="'双击编辑'"
+            @dblclick="openEdit(note)"
           >
             <el-icon
               v-if="note.pinned"
@@ -62,7 +66,10 @@
               @click="toggleExpand(note)"
             >{{ expandedIds.has(note.id) ? '收起' : '展开' }}</span>
             <div class="note-footer">
-              <span class="note-time">{{ formatTime(note.createdAt) }}</span>
+              <div class="note-meta">
+                <span class="note-time">{{ formatTime(note.createdAt) }}</span>
+                <span v-if="isEdited(note)" class="edited-tag">已编辑</span>
+              </div>
               <div class="note-actions">
                 <el-tooltip :content="note.pinned ? '取消置顶' : '置顶'" placement="top">
                   <el-icon
@@ -94,8 +101,10 @@
       v-model="dialogVisible"
       :title="editingId ? '编辑便签' : '新建便签'"
       width="520px"
+      @opened="focusContentInput"
     >
       <el-input
+        ref="contentInputRef"
         v-model="form.content"
         type="textarea"
         :rows="5"
@@ -170,6 +179,19 @@ const toggleExpand = (note) => {
 const dialogVisible = ref(false)
 const editingId = ref(null)
 const form = reactive({ content: '', color: 'yellow' })
+const contentInputRef = ref(null)
+
+/* 弹窗动画结束后聚焦输入框 */
+const focusContentInput = () => {
+  contentInputRef.value?.focus()
+}
+
+/* 是否编辑过：updatedAt 存在且与创建时间（秒级精度）不同；
+   旧数据 ALTER 后 updatedAt 为 null，视为未编辑；
+   新建时两值由两次 utcnow() 生成，仅微秒级差异，按秒比较视为未编辑 */
+const isEdited = (note) => {
+  return !!note.updatedAt && note.updatedAt.slice(0, 19) !== note.createdAt.slice(0, 19)
+}
 
 const colorHex = (value) => {
   return NOTE_COLORS.find((c) => c.value === value)?.hex || NOTE_COLORS[0].hex
@@ -225,7 +247,10 @@ const handleSave = async () => {
       ElMessage.success('保存成功')
     } else {
       const res = await createNoteApi({ content, color: form.color })
-      noteList.value.unshift(res.data)
+      // 与后端排序规则一致（置顶在前 + 时间倒序），避免新便签插到置顶便签之前
+      noteList.value = [res.data, ...noteList.value].sort(
+        (a, b) => Number(b.pinned) - Number(a.pinned) || b.createdAt.localeCompare(a.createdAt)
+      )
       ElMessage.success('新增成功')
     }
     dialogVisible.value = false
@@ -445,13 +470,37 @@ onMounted(fetchList)
   justify-content: space-between;
   margin-top: 4px;
 }
+.note-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .note-time {
   font-size: 12px;
   color: #a0a2a8;
 }
+.edited-tag {
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #909399;
+  background: rgba(255, 255, 255, 0.65);
+}
 .note-actions {
   display: flex;
   gap: 12px;
+  /* 悬停显示，触屏设备无 hover 则常显 */
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.note-item:hover .note-actions {
+  opacity: 1;
+}
+@media (hover: none) {
+  .note-actions {
+    opacity: 1;
+  }
 }
 .action-icon {
   color: #a0a2a8;

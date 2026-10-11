@@ -21,14 +21,40 @@
         <div class="stat-label">未完成</div>
       </el-card>
     </div>
+
+    <!-- 最近便签速览 -->
+    <el-card class="recent-notes-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span>最近便签</span>
+          <el-link type="primary" :underline="false" @click="router.push('/notes')">查看全部</el-link>
+        </div>
+      </template>
+      <div v-loading="notesLoading" class="recent-notes">
+        <p v-if="!notesLoading && recentNotes.length === 0" class="notes-empty">暂无便签，去便签页记录点文字吧</p>
+        <div
+          v-for="note in recentNotes"
+          :key="note.id"
+          class="recent-note-item"
+          @click="router.push('/notes')"
+        >
+          <span class="color-dot" :style="{ background: noteColorHex(note.color) }" />
+          <span class="note-brief">{{ note.content }}</span>
+          <span class="note-date">{{ formatDate(note.createdAt) }}</span>
+        </div>
+      </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { listTodoApi, BIZ_CODE } from '@/api/todo'
+import { useRouter } from 'vue-router'
+import { listTodoApi, BIZ_CODE as TODO_CODE } from '@/api/todo'
+import { listNotesApi, BIZ_CODE as NOTE_CODE, NOTE_COLORS } from '@/api/note'
 import { useUnauthorizedHandler } from '@/composables/useAuth'
 
+const router = useRouter()
 const onUnauthorized = useUnauthorizedHandler()
 
 const todoList = ref([])
@@ -39,16 +65,43 @@ const stats = computed(() => ({
   pending: todoList.value.filter((t) => !t.completed).length
 }))
 
+/* 最近便签（后端已按置顶+时间排序，取前 3 条） */
+const notesLoading = ref(false)
+const recentNotes = ref([])
+
+const noteColorHex = (value) => {
+  return NOTE_COLORS.find((c) => c.value === value)?.hex || NOTE_COLORS[0].hex
+}
+
+const formatDate = (iso) => {
+  if (!iso) return ''
+  return iso.replace('T', ' ').slice(5, 10)
+}
+
 onMounted(async () => {
   try {
     const res = await listTodoApi()
     todoList.value = res.data.list
   } catch (err) {
-    if (err.code === BIZ_CODE.UNAUTHORIZED) {
+    if (err.code === TODO_CODE.UNAUTHORIZED) {
       onUnauthorized()
       return
     }
     // 统计数据加载失败不阻塞页面，静默降级为 0
+  }
+
+  notesLoading.value = true
+  try {
+    const res = await listNotesApi()
+    recentNotes.value = res.data.list.slice(0, 3)
+  } catch (err) {
+    if (err.code === NOTE_CODE.UNAUTHORIZED) {
+      onUnauthorized()
+      return
+    }
+    // 便签速览加载失败不阻塞页面
+  } finally {
+    notesLoading.value = false
   }
 })
 </script>
@@ -96,5 +149,62 @@ onMounted(async () => {
   margin-top: 6px;
   font-size: 13px;
   color: #909399;
+}
+.recent-notes-card {
+  border-radius: 12px;
+  margin-top: 20px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2329;
+}
+.recent-notes {
+  min-height: 40px;
+}
+.notes-empty {
+  margin: 8px 0;
+  font-size: 13px;
+  color: #909399;
+  text-align: center;
+}
+.recent-note-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+.recent-note-item:last-child {
+  border-bottom: none;
+}
+.recent-note-item:hover .note-brief {
+  color: #409eff;
+}
+.color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.note-brief {
+  flex: 1;
+  font-size: 14px;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+}
+.note-date {
+  font-size: 12px;
+  color: #c0c4cc;
+  flex-shrink: 0;
 }
 </style>

@@ -67,6 +67,8 @@ class Note(Base):
     color = Column(String(10), nullable=False, default="yellow")
     pinned = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # 由 crud.update_note 显式维护：仅内容/颜色变更时刷新（置顶变更不算编辑）
+    updated_at = Column(DateTime, default=datetime.utcnow, nullable=True)
 
     def to_dict(self):
         return {
@@ -75,4 +77,5 @@ class Note(Base):
             "color": self.color,
             "pinned": self.pinned,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }

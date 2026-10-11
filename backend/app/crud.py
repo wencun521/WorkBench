@@ -1,6 +1,8 @@
 """
 数据操作（CRUD）
 """
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from .models import User, Todo, Note
@@ -99,8 +101,10 @@ def get_note_by_id(db: Session, user_id: int, note_id: int) -> Note | None:
 
 def update_note(db: Session, note: Note, **fields) -> Note:
     for key, value in fields.items():
-        if value is not None:
-            setattr(note, key, value)
+        setattr(note, key, value)
+    # 仅内容/颜色变更视为"编辑"，刷新 updated_at；置顶变更不影响
+    if "content" in fields or "color" in fields:
+        note.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(note)
     return note

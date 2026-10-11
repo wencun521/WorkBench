@@ -60,7 +60,8 @@ def edit_note(
     if not note:
         return ApiResponse(code=BIZ_CODE["NOTE_NOT_FOUND"], message="便签不存在")
 
-    fields = {"content": None, "color": None, "pinned": None}
+    # 只收集显式传入的字段（update_note 按 key 判断是否刷新 updated_at）
+    fields = {}
     if payload.content is not None:
         fields["content"] = payload.content.strip()
     if payload.color is not None:
