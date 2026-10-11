@@ -26,10 +26,16 @@ BIZ_CODE = {
     "SCHEDULE_TITLE_INVALID": 40008,
     "SCHEDULE_DATE_INVALID": 40009,
     "SCHEDULE_NOT_FOUND": 40404,
+    "HABIT_NAME_INVALID": 40010,
+    "HABIT_COLOR_INVALID": 40011,
+    "HABIT_NOT_FOUND": 40405,
 }
 
 # 便签允许的颜色（与前端 notes.vue 的色板一致）
 NOTE_COLORS = ("yellow", "blue", "green", "pink")
+
+# 习惯允许的颜色（复用便签色板，与前端 habits.vue 一致）
+HABIT_COLORS = NOTE_COLORS
 
 # 待办看板允许的状态（与前端 kanban.vue 的三列一致）
 TODO_STATUSES = ("todo", "doing", "done")
@@ -117,4 +123,13 @@ def validate_note_content(content: str) -> str:
         return "请输入便签内容"
     if len(content.strip()) > 500:
         return "便签内容不能超过 500 个字符"
+    return ""
+
+
+def validate_habit_name(name: str) -> str:
+    """习惯名称校验：返回错误信息，空字符串表示校验通过。"""
+    if not name or not name.strip():
+        return "请输入习惯名称"
+    if len(name.strip()) > 50:
+        return "习惯名称不能超过 50 个字符"
     return ""

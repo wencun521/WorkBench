@@ -44,6 +44,18 @@ const routes = [
         meta: { title: '日程日历' }
       },
       {
+        path: 'pomodoro',
+        name: 'Pomodoro',
+        component: () => import('@/views/pomodoro.vue'),
+        meta: { title: '番茄钟' }
+      },
+      {
+        path: 'habits',
+        name: 'Habits',
+        component: () => import('@/views/habits.vue'),
+        meta: { title: '习惯打卡' }
+      },
+      {
         path: 'notes',
         name: 'Notes',
         component: () => import('@/views/notes.vue'),

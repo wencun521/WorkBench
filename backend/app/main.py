@@ -12,8 +12,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .database import engine, Base
-from .models import User, Todo, Note, Schedule  # noqa: F401  确保模型被注册
-from .routers import user_router, todo_router, note_router, schedule_router, dashboard_router
+from .models import User, Todo, Note, Schedule, Habit, HabitCheckin, PomodoroSession  # noqa: F401  确保模型被注册
+from .routers import (
+    user_router,
+    todo_router,
+    note_router,
+    schedule_router,
+    dashboard_router,
+    habit_router,
+    pomodoro_router,
+)
 from .deps import UnauthorizedError
 from .validators import BIZ_CODE
 
@@ -37,6 +45,8 @@ app.include_router(todo_router)
 app.include_router(note_router)
 app.include_router(schedule_router)
 app.include_router(dashboard_router)
+app.include_router(habit_router)
+app.include_router(pomodoro_router)
 
 
 # 认证失败：沿用「HTTP 恒 200 + code 表达业务结果」约定，

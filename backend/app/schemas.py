@@ -50,6 +50,22 @@ class ScheduleUpdateRequest(BaseModel):
     note: str | None = Field(None, description="备注")
 
 
+# ---------- Habit ----------
+class HabitCreateRequest(BaseModel):
+    name: str = Field(..., description="习惯名称")
+    color: str = Field("blue", description="颜色标记")
+
+
+class HabitUpdateRequest(BaseModel):
+    name: str | None = Field(None, description="习惯名称")
+    color: str | None = Field(None, description="颜色标记")
+
+
+# ---------- Pomodoro ----------
+class PomodoroSessionRequest(BaseModel):
+    todoId: int | None = Field(None, description="关联待办（可选）")
+
+
 # ---------- Note ----------
 class NoteCreateRequest(BaseModel):
     content: str = Field(..., description="便签内容")

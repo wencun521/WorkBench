@@ -6,9 +6,12 @@ Todo 表：id, user_id, title, note, status(todo/doing/done), created_at
          completed 列已废弃（保留声明防止 INSERT 违反 NOT NULL，全链路停止读写）
 Note 表：id, user_id, content, color, pinned, created_at
 Schedule 表：id, user_id, title, date, start, end, all_day, note, created_at
+Habit 表：id, user_id, name, color, created_at
+HabitCheckin 表：id, habit_id, user_id, date, created_at（habit_id+date 唯一）
+PomodoroSession 表：id, user_id, todo_id, todo_title, duration_minutes, date, created_at
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Index, UniqueConstraint
 
 from .database import Base
 
@@ -111,5 +114,63 @@ class Schedule(Base):
             "end": self.end,
             "allDay": self.all_day,
             "note": self.note or "",
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Habit(Base):
+    __tablename__ = "habits"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(50), nullable=False)
+    color = Column(String(10), nullable=False, default="blue")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "color": self.color,
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class HabitCheckin(Base):
+    __tablename__ = "habit_checkins"
+    __table_args__ = (
+        UniqueConstraint("habit_id", "date", name="uq_habit_checkin_habit_date"),
+        Index("ix_habit_checkins_user_date", "user_id", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    habit_id = Column(Integer, ForeignKey("habits.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(String(10), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PomodoroSession(Base):
+    __tablename__ = "pomodoro_sessions"
+    __table_args__ = (
+        Index("ix_pomodoro_sessions_user_date", "user_id", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    todo_id = Column(Integer, ForeignKey("todos.id"), nullable=True)
+    # 待办标题快照：待办删除后历史记录仍可读，列表免 join
+    todo_title = Column(String(100), nullable=True)
+    duration_minutes = Column(Integer, nullable=False)
+    date = Column(String(10), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "todoId": self.todo_id,
+            "todoTitle": self.todo_title,
+            "durationMinutes": self.duration_minutes,
+            "date": self.date,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
         }

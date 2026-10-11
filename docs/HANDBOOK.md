@@ -37,6 +37,8 @@
 | 待办事项 `/todo` | 增删改查 + 三态状态（todo/doing/done），本人数据隔离 | 2026-10-09 |
 | 任务看板 `/kanban` | 三列拖拽看板（原生 HTML5 DnD），与待办共用数据，列内新增/编辑/删除 | 2026-10-11 |
 | 日程日历 `/schedule` | 月历 + 当日列表，日程增删改查（全天/时段），本人数据隔离 | 2026-10-11 |
+| 习惯打卡 `/habits` | 习惯增删改 + 今日打卡（幂等）+ streak + 近 7 天网格 | 2026-10-11 |
+| 番茄钟 `/pomodoro` | 专注/休息双模式倒计时，会话关联待办并留档，今日统计 | 2026-10-11 |
 | 聚合仪表盘 `/` | 菜单分组 + 模块入口卡 + 今日概览（`/api/dashboard` 单请求聚合） | 2026-10-11 |
 | 侧边栏布局 | 可折叠侧边栏（配置驱动分组菜单）+ 主内容区 | 2026-10-09 |
 | 首页统计 | 欢迎卡 + 待办统计（总数/已完成/未完成）+ 最近便签速览 | 2026-10-09 |
@@ -179,6 +181,8 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | [home-sidebar-layout-plan.md](./home-sidebar-layout-plan.md) | 功能规格 | 侧边栏布局：Layout 组件拆分、嵌套路由、组合式函数 |
 | [dashboard-menu-plan.md](./dashboard-menu-plan.md) | 功能规格 | 工作台地基：菜单分组（menuConfig 配置驱动）、/api/dashboard 聚合仪表盘 |
 | [schedule-feature-plan.md](./schedule-feature-plan.md) | 功能规格 | 日程日历：Schedule 模型、el-calendar 月视图、当日列表 |
+| [habit-feature-plan.md](./habit-feature-plan.md) | 功能规格 | 习惯打卡：双表模型、streak 后端口径、幂等打卡 |
+| [pomodoro-feature-plan.md](./pomodoro-feature-plan.md) | 功能规格 | 番茄钟：会话快照模型、WebAudio 提示、仪表盘集成 |
 | [kanban-feature-plan.md](./kanban-feature-plan.md) | 功能规格 | 任务看板：status 三态改造、迁移脚本、原生拖拽方案 |
 | [note-feature-plan.md](./note-feature-plan.md) | 功能规格 | 便签：Note 模型、色板约定、置顶排序方案 |
 | [notes-optimization.md](./notes-optimization.md) | 优化清单 | 便签体验优化建议（已全部落地，含决策记录） |
@@ -207,6 +211,8 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | 40007 | TODO_STATUS_INVALID | 待办状态非法（须为 todo/doing/done） |
 | 40008 | SCHEDULE_TITLE_INVALID | 日程标题非法（非空，≤100 字） |
 | 40009 | SCHEDULE_DATE_INVALID | 日程日期/时间非法（格式错误、日期不存在、结束早于开始） |
+| 40010 | HABIT_NAME_INVALID | 习惯名称非法（非空，≤50 字） |
+| 40011 | HABIT_COLOR_INVALID | 习惯颜色非法（须在 4 色白名单内） |
 | 40006 | NOTE_CONTENT_INVALID | 便签内容/颜色非法（内容非空 ≤500 字；颜色需在白名单内） |
 | 40100 | UNAUTHORIZED | 未登录或 token 已过期 |
 | 40101 | PASSWORD_INCORRECT | 用户名或密码错误 |
@@ -214,6 +220,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | 40402 | TODO_NOT_FOUND | 待办不存在（含非本人，防泄露） |
 | 40403 | NOTE_NOT_FOUND | 便签不存在（含非本人，防泄露） |
 | 40404 | SCHEDULE_NOT_FOUND | 日程不存在（含非本人，防泄露） |
+| 40405 | HABIT_NOT_FOUND | 习惯不存在（含非本人，防泄露） |
 | 40901 | USERNAME_EXISTS | 用户名已存在 |
 | 40902 | EMAIL_EXISTS | 邮箱已被注册 |
 
@@ -265,7 +272,25 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/dashboard` | 聚合返回：todo 统计、今日待办 ≤5、最近便签 ≤3、今日日程 ≤5、today 日期 |
+| GET | `/api/dashboard` | 聚合返回：todo 统计、今日待办 ≤5、最近便签 ≤3、今日日程 ≤5、habit/pomodoro 摘要、today 日期 |
+
+**习惯 `/api/habit`**（均需认证）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/habit/list` | `[{...habit, todayChecked, streak, last7}]` |
+| POST | `/api/habit` | `{name, color?}` |
+| PUT | `/api/habit/{id}` | `{name?, color?}` |
+| DELETE | `/api/habit/{id}` | 删除习惯及其打卡记录 |
+| POST | `/api/habit/{id}/checkin` | 今日打卡（幂等） |
+| DELETE | `/api/habit/{id}/checkin` | 取消今日打卡 |
+
+**番茄钟 `/api/pomodoro`**（均需认证）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/pomodoro/sessions` | `{todoId?}`，记录一个 25 分钟专注会话 |
+| GET | `/api/pomodoro/summary` | `{todayCount, recent ≤10}` |
 
 ## 七、版本管理规范
 

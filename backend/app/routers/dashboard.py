@@ -10,7 +10,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..crud import list_todos, list_notes, list_schedules_by_date
+from ..crud import (
+    list_todos,
+    list_notes,
+    list_schedules_by_date,
+    count_habits_done_on,
+    today_pomodoro_count,
+)
 from ..deps import get_current_user
 from ..models import User
 
@@ -27,6 +33,8 @@ def get_dashboard(
     todos = list_todos(db, current_user.id)
     notes = list_notes(db, current_user.id)
     schedules = list_schedules_by_date(db, current_user.id, today)
+    habits_done, habits_total = count_habits_done_on(db, current_user.id, today)
+    pomodoros_today = today_pomodoro_count(db, current_user.id, today)
 
     return {
         "code": 0,
@@ -58,5 +66,7 @@ def get_dashboard(
                 {"id": s.id, "title": s.title, "start": s.start, "allDay": s.all_day}
                 for s in schedules[:5]
             ],
+            "habit": {"total": habits_total, "doneToday": habits_done},
+            "pomodoro": {"todayCount": pomodoros_today},
         },
     }

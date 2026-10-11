@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from .models import User, Todo, Note, Schedule
+from .models import User, Todo, Note, Schedule, Habit, HabitCheckin, PomodoroSession
 from .auth import hash_password
 
 
@@ -67,6 +67,10 @@ def update_todo(db: Session, todo: Todo, **fields) -> Todo:
 
 
 def delete_todo(db: Session, todo: Todo) -> None:
+    # 番茄钟会话不级联删除：解除关联（保留 todo_title 快照供历史查看）
+    db.query(PomodoroSession).filter(PomodoroSession.todo_id == todo.id).update(
+        {PomodoroSession.todo_id: None}
+    )
     db.delete(todo)
     db.commit()
 
@@ -171,3 +175,113 @@ def update_schedule(db: Session, schedule: Schedule, **fields) -> Schedule:
 def delete_schedule(db: Session, schedule: Schedule) -> None:
     db.delete(schedule)
     db.commit()
+
+
+# ---------- Habit ----------
+def create_habit(db: Session, user_id: int, name: str, color: str = "blue") -> Habit:
+    habit = Habit(user_id=user_id, name=name, color=color)
+    db.add(habit)
+    db.commit()
+    db.refresh(habit)
+    return habit
+
+
+def list_habits(db: Session, user_id: int) -> list[Habit]:
+    return db.query(Habit).filter(Habit.user_id == user_id).order_by(Habit.created_at.asc()).all()
+
+
+def get_habit_by_id(db: Session, user_id: int, habit_id: int) -> Habit | None:
+    # 强制限定 user_id：不存在与非本人统一按不存在处理，防泄露
+    return db.query(Habit).filter(Habit.id == habit_id, Habit.user_id == user_id).first()
+
+
+def update_habit(db: Session, habit: Habit, **fields) -> Habit:
+    for key, value in fields.items():
+        if value is not None:
+            setattr(habit, key, value)
+    db.commit()
+    db.refresh(habit)
+    return habit
+
+
+def delete_habit(db: Session, habit: Habit) -> None:
+    # 显式先删打卡记录（SQLite 不依赖 DB 级联）
+    db.query(HabitCheckin).filter(HabitCheckin.habit_id == habit.id).delete()
+    db.delete(habit)
+    db.commit()
+
+
+def get_checkin(db: Session, habit_id: int, date: str) -> HabitCheckin | None:
+    return (
+        db.query(HabitCheckin)
+        .filter(HabitCheckin.habit_id == habit_id, HabitCheckin.date == date)
+        .first()
+    )
+
+
+def add_checkin(db: Session, habit_id: int, user_id: int, date: str) -> HabitCheckin | None:
+    """打卡（幂等：当天已打卡返回 None 表示无变化）。"""
+    if get_checkin(db, habit_id, date):
+        return None
+    checkin = HabitCheckin(habit_id=habit_id, user_id=user_id, date=date)
+    db.add(checkin)
+    db.commit()
+    db.refresh(checkin)
+    return checkin
+
+
+def remove_checkin(db: Session, habit_id: int, date: str) -> bool:
+    """取消打卡：返回是否有删除发生。"""
+    checkin = get_checkin(db, habit_id, date)
+    if not checkin:
+        return False
+    db.delete(checkin)
+    db.commit()
+    return True
+
+
+def count_habits_done_on(db: Session, user_id: int, date: str) -> tuple[int, int]:
+    """返回 (今日已打卡习惯数, 习惯总数)。"""
+    total = db.query(Habit).filter(Habit.user_id == user_id).count()
+    done = (
+        db.query(HabitCheckin)
+        .join(Habit, Habit.id == HabitCheckin.habit_id)
+        .filter(Habit.user_id == user_id, HabitCheckin.date == date)
+        .count()
+    )
+    return done, total
+
+
+# ---------- Pomodoro ----------
+def create_pomodoro_session(
+    db: Session, user_id: int, todo_id: int | None, todo_title: str | None, duration_minutes: int
+) -> PomodoroSession:
+    session = PomodoroSession(
+        user_id=user_id,
+        todo_id=todo_id,
+        todo_title=todo_title,
+        duration_minutes=duration_minutes,
+        date=datetime.utcnow().strftime("%Y-%m-%d"),
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def today_pomodoro_count(db: Session, user_id: int, date: str) -> int:
+    return (
+        db.query(PomodoroSession)
+        .filter(PomodoroSession.user_id == user_id, PomodoroSession.date == date)
+        .count()
+    )
+
+
+def recent_pomodoro_sessions(db: Session, user_id: int, limit: int = 10) -> list[PomodoroSession]:
+    return (
+        db.query(PomodoroSession)
+        .filter(PomodoroSession.user_id == user_id)
+        .order_by(PomodoroSession.created_at.desc())
+        .limit(limit)
+        .all()
+    )
