@@ -1,6 +1,6 @@
 # Admin Pro 项目主文档
 
-> **版本**：0.1.0 ｜ **更新时间**：2026-10-10 ｜ **状态**：活跃开发中
+> **版本**：0.1.0 ｜ **更新时间**：2026-10-11 ｜ **状态**：活跃开发中
 >
 > 本文档是整个项目的**核心导航入口**，汇总项目概述、架构说明、目录索引、开发/接口/部署/维护规范，并关联所有子文档。新成员请从本文档开始阅读；新增功能文档时请同步更新 [§5 文档导航](#五文档导航)。入口页为根目录 [README.md](../README.md)。
 
@@ -324,13 +324,25 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 
 ### 8.2 生产部署步骤
 
+**方式一：后端单进程托管（推荐，最简单）**
+
 1. **前端构建**：`npm run build` → 产出 `dist/` 静态文件
-2. **静态托管**：`dist/` 交给 Nginx / Caddy 等；SPA 需配置 history 回退（所有路径回退到 `index.html`）
-3. **API 反代**：Nginx 将 `/api` 反向代理到 uvicorn（`uvicorn app.main:app --host 0.0.0.0 --port 8000`，去掉 `--reload`）
-4. **安全加固（上线前必做）**：
-   - 替换 `auth.py` 中默认 `JWT_SECRET_KEY`（通过环境变量注入）
-   - CORS `allow_origins=["*"]` 收紧为具体域名（`main.py`）
-   - SQLite 适合单机轻量场景；多实例/高并发需换 PostgreSQL/MySQL
+2. **启动后端**：`uvicorn app.main:app --host 127.0.0.1 --port 8000`（不带 `--reload`）
+   - `main.py` 末尾会自动检测根目录 `dist/` 并以 catch-all 路由托管：dist 中真实存在的文件（js/css/图标）直接返回，其余路径统一回退 `index.html`，由前端路由处理（SPA history 回退已内置，**无需 Nginx 配置 try_files**）
+   - `/api` 与 `/health` 路由注册在前，不会被 catch-all 拦截
+3. **公网部署**：前置 Nginx 处理 HTTPS/域名，将请求反代到 `127.0.0.1:8000`；后端只绑定本机回环地址，不对公网开放
+
+**方式二：前后端分离部署（Nginx 托管静态资源）**
+
+1. `dist/` 交给 Nginx / Caddy 静态托管，需自行配置 history 回退（所有路径回退到 `index.html`）
+2. Nginx 将 `/api` 反向代理到 uvicorn（`uvicorn app.main:app --host 127.0.0.1 --port 8000`，去掉 `--reload`）
+
+**安全加固（上线前必做）**：
+
+- 通过环境变量注入强随机 `JWT_SECRET_KEY`（`auth.py` 已支持，未设置时启动会输出警告）
+- 公网若走同域反代，CORS 中间件可保留；若前后端分开域名，需将 `main.py` 中 `allow_origins=["*"]` 收紧为具体域名
+- SQLite 适合单机轻量场景；多实例/高并发需换 PostgreSQL/MySQL
+- 注意：修改前端代码后需重新 `npm run build` 才会生效（后端托管的是 dist 产物，不是源码）
 
 ## 九、维护手册
 

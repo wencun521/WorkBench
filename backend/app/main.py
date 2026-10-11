@@ -6,10 +6,16 @@ FastAPI 应用入口
     uvicorn app.main:app --reload --port 8000
 或：
     python run.py
+
+生产部署：
+    npm run build 生成根目录 dist/ 后，本应用会自动将其挂载在 /，
+    单进程即可同时提供前端页面与 /api 接口。
 """
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from .database import engine, Base
 from .models import (  # noqa: F401  确保模型被注册
@@ -77,3 +83,18 @@ async def unauthorized_handler(request: Request, exc: UnauthorizedError):
 @app.get("/health", tags=["system"])
 def health_check():
     return {"status": "ok"}
+
+
+# 生产部署：若根目录存在前端打包产物 dist/，则由本应用统一对外服务。
+# 注意必须在所有 API 路由注册之后执行，避免拦截 /api 与 /health。
+# SPA 回退：dist 中真实存在的文件（js/css/图标等）直接返回，
+# 其余路径（如 /bookmarks）统一返回 index.html，交给前端路由处理。
+_dist_dir = Path(__file__).resolve().parents[2] / "dist"
+if _dist_dir.is_dir():
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_fallback(full_path: str):
+        candidate = (_dist_dir / full_path).resolve()
+        if full_path and candidate.is_file() and candidate.is_relative_to(_dist_dir):
+            return FileResponse(candidate)
+        return FileResponse(_dist_dir / "index.html")

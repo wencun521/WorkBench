@@ -4,16 +4,24 @@
 密码哈希直接使用 bcrypt 库（避免 passlib 与新版 bcrypt 的兼容性问题）。
 """
 import os
+import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
 from jose import JWTError, jwt
 
-# JWT 配置（生产环境应通过环境变量注入密钥）
+# JWT 配置：密钥通过环境变量 JWT_SECRET_KEY 注入
+# 生产环境务必设置强随机密钥，否则启动时会输出警告
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-please-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 天
+
+if SECRET_KEY.startswith("dev-secret"):
+    warnings.warn(
+        "JWT_SECRET_KEY 未设置，正在使用开发默认密钥，切勿在生产环境使用！",
+        stacklevel=1,
+    )
 
 
 def hash_password(password: str) -> str:
