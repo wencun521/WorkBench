@@ -50,8 +50,16 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <span class="row-icon" :style="{ background: iconColor(b.category), color: '#fff' }">
-              {{ iconChar(b.category) }}
+            <span class="row-icon" :style="iconStyle(b.category, b.url)">
+              <img
+                v-if="!faviconFailed.has(hostname(b.url))"
+                class="favicon-img"
+                :src="faviconUrl(b.url)"
+                alt=""
+                loading="lazy"
+                @error="markFaviconFailed(hostname(b.url))"
+              />
+              <template v-else>{{ iconChar(b.category) }}</template>
             </span>
             <div class="row-main">
               <span class="row-title">{{ b.title || hostname(b.url) }}</span>
@@ -86,10 +94,14 @@
     >
       <el-form label-position="top">
         <el-form-item label="URL" required>
-          <el-input ref="urlInputRef" v-model="form.url" placeholder="https://..." />
+          <el-input ref="urlInputRef" v-model="form.url" placeholder="https://..." @blur="handleUrlBlur" />
         </el-form-item>
         <el-form-item label="标题">
-          <el-input v-model="form.title" maxlength="100" placeholder="留空则显示域名" />
+          <el-input v-model="form.title" maxlength="100" placeholder="留空则显示域名">
+            <template #append>
+              <el-button :loading="fetchingTitle" @click="fetchTitle">获取标题</el-button>
+            </template>
+          </el-input>
         </el-form-item>
         <el-form-item label="分类">
           <input v-model="form.category" class="category-input" list="category-list" maxlength="50" placeholder="未分类" />
@@ -125,7 +137,8 @@ import {
   listBookmarksApi,
   createBookmarkApi,
   updateBookmarkApi,
-  deleteBookmarkApi
+  deleteBookmarkApi,
+  fetchMetaApi
 } from '@/api/bookmark'
 import { useUnauthorizedHandler } from '@/composables/useAuth'
 
@@ -179,6 +192,17 @@ const iconColor = (category) => {
 }
 const iconChar = (category) => (category || '未')[0].toUpperCase()
 
+/* Favicon：按域名拼 favicon.im 公共服务地址（throw-error-on-404 使未收录站点走 404），加载失败回退分类色块 */
+const faviconFailed = reactive(new Set())
+const markFaviconFailed = (host) => faviconFailed.add(host)
+const faviconUrl = (url) => `https://a.favicon.im/${hostname(url)}?throw-error-on-404=true`
+const iconStyle = (category, url) => {
+  if (faviconFailed.has(hostname(url))) {
+    return { background: iconColor(category), color: '#fff' }
+  }
+  return {}
+}
+
 const hostname = (url) => {
   try {
     return new URL(url).hostname
@@ -206,6 +230,47 @@ const openEdit = (b) => {
   editingId.value = b.id
   Object.assign(form, { url: b.url, title: b.title || '', category: b.category, note: b.note })
   dialogVisible.value = true
+}
+
+/* 抓取网页标题预填（手动按钮 + 新增弹窗 URL blur 自动触发） */
+const fetchingTitle = ref(false)
+const fetchTitle = async () => {
+  const url = form.url.trim()
+  if (!url) {
+    ElMessage.warning('请先输入书签 URL')
+    return
+  }
+  fetchingTitle.value = true
+  try {
+    const res = await fetchMetaApi(url)
+    if (res.data && res.data.title) {
+      form.title = res.data.title
+      ElMessage.success('标题获取成功')
+    } else {
+      ElMessage.info('未能获取到标题，请手动填写')
+    }
+  } catch (err) {
+    if (err.code === BIZ_CODE.UNAUTHORIZED) {
+      onUnauthorized()
+      return
+    }
+    ElMessage.info('未能获取到标题，请手动填写')
+  } finally {
+    fetchingTitle.value = false
+  }
+}
+
+const handleUrlBlur = () => {
+  /* 编辑弹窗不自动抓取，避免覆盖用户已起的标题 */
+  if (editingId.value) return
+  if (form.title.trim() || !form.url.trim()) return
+  try {
+    const parsed = new URL(form.url.trim())
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return
+  } catch {
+    return
+  }
+  fetchTitle()
 }
 
 const handleSave = async () => {
@@ -354,6 +419,11 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: 600;
   flex-shrink: 0;
+}
+.favicon-img {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
 }
 .row-main {
   flex: 1;

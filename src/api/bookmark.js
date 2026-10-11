@@ -48,3 +48,12 @@ export async function updateBookmarkApi(id, payload) {
 export async function deleteBookmarkApi(id) {
   return request.delete(`/bookmark/${id}`)
 }
+
+/**
+ * 抓取目标网页标题（新增书签时预填，抓取失败返回 title: null）
+ * @param {string} url
+ * @returns {Promise<{ code: 0, message: string, data: { title: string|null } }>}
+ */
+export async function fetchMetaApi(url) {
+  return request.get('/bookmark/fetch-meta', { params: { url } })
+}

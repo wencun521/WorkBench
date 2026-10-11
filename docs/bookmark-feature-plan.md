@@ -48,9 +48,9 @@
 
 ---
 
-## 六、增强：自动获取网站标题与 Favicon（待实现）
+## 六、增强：自动获取网站标题与 Favicon（已实现）
 
-> 方案确认于 2026-10-11，尚未实现。本文档即实现依据，供新会话直接开工。
+> 方案确认于 2026-10-11，已实现并验证通过（见 6.6 验证记录）。本文档即实现依据。
 
 ### 6.1 目标
 
@@ -61,7 +61,8 @@
 
 不做真实抓取与存储，按域名拼公共 favicon 服务地址，`<img>` 直接加载：
 
-- 优先：`https://icons.duckduckgo.com/ip3/{域名}.ico`（国内可访问）
+- 采用：`https://a.favicon.im/{域名}?throw-error-on-404=true`（favicon.im，国内可访问；`throw-error-on-404` 使未收录站点返回 HTTP 404，直接触发 `@error` 回退，避免加载默认占位图标）
+- 初版曾用 `https://icons.duckduckgo.com/ip3/{域名}.ico`，因当前网络环境不可达（超时）于 2026-10-11 切换为 favicon.im
 - `@error` 回退到现有「分类首字符色块」，视觉无缝降级（用一个 `faviconFailed` Set 记录加载失败的域名，避免重复请求）
 - 优点：浏览器自动缓存、无存储成本、无后端请求；缺点：极少数未收录新站走回退
 
@@ -94,7 +95,9 @@
 | src/views/bookmarks.vue | favicon 渲染 + 回退逻辑；弹窗 blur 自动抓取 + 手动按钮 |
 | requirements.txt（如有） | 补 httpx |
 
-### 6.6 验证要点
+### 6.6 验证记录
 
-- 接口：合法 url 返回 title；`javascript:` → 40013；不可达域名 → code=0 且 title=null；未登录 → 40100
-- 页面：新增书签 blur 自动带出标题且可改；favicon 正常显示；断网/未收录站点回退色块；编辑弹窗不自动抓取
+- 接口（2026-10-11）：合法 url（example.com）返回 title；`javascript:alert(1)` → 40013；不可达域名 → code=0 且 title=null；未登录 → 40100；github.com 返回真实标题 —— 全通过
+- 页面：手动「获取标题」按钮（含 loading）成功抓取并填入（baidu → "百度一下，你就知道"）；保存后列表标题正确；编辑弹窗不自动抓取、手动可用 —— 通过
+- 自动 blur 触发：模板编译产物确认 `onBlur: $setup.handleUrlBlur` 绑定存在，直接调用处理函数后请求立即发出且标题回填，链路完整；自动化环境的合成焦点事件无法送达 Vue 监听器（真实键盘 Tab 触发 focusout 但监听器未执行），属测试环境限制，需真实浏览器手动复核 blur 自动抓取
+- favicon：favicon.im 服务可达性实测 github.com → 200 (SVG)、baidu.com → 200 (ICO)、未收录域名 → 404 触发 `@error` 回退；浏览器走查 github 书签显示真实猫标，未收录站点（example.com）无缝回退色块 —— 通过（2026-10-11 切换 favicon.im 后实测）

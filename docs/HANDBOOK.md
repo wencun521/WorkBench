@@ -43,7 +43,7 @@
 | 侧边栏布局 | 可折叠侧边栏（配置驱动分组菜单）+ 主内容区 | 2026-10-09 |
 | 首页统计 | 欢迎卡 + 待办统计（总数/已完成/未完成）+ 最近便签速览 | 2026-10-09 |
 | 便签 `/notes` | 增删改查 + 4 色标记 + 置顶，本人数据隔离 | 2026-10-09 |
-| 书签收藏 `/bookmarks` | 链接 + 自由分类 + 前端搜索，http/https 协议白名单，本人数据隔离 | 2026-10-11 |
+| 书签收藏 `/bookmarks` | 链接 + 自由分类 + 前端搜索，http/https 协议白名单，本人数据隔离；favicon.im 图标展示（失败回退色块）、fetch-meta 自动抓取网页标题预填 | 2026-10-11 |
 
 ## 二、整体架构说明
 
@@ -60,6 +60,7 @@
 | ORM | SQLAlchemy 2.x | 最新 | declarative_base，无 Alembic 迁移 |
 | 数据库 | SQLite | 内置 | 文件 `backend/app/app.db` |
 | 认证 | python-jose (JWT HS256) + bcrypt | 最新 | token 1 天过期 |
+| HTTP 客户端 | httpx | 最新 | 书签 fetch-meta 抓取网页标题（5s 超时 + 512KB 截断） |
 
 ### 2.2 架构与请求链路
 
@@ -184,7 +185,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | [schedule-feature-plan.md](./schedule-feature-plan.md) | 功能规格 | 日程日历：Schedule 模型、el-calendar 月视图、当日列表 |
 | [habit-feature-plan.md](./habit-feature-plan.md) | 功能规格 | 习惯打卡：双表模型、streak 后端口径、幂等打卡 |
 | [pomodoro-feature-plan.md](./pomodoro-feature-plan.md) | 功能规格 | 番茄钟：会话快照模型、WebAudio 提示、仪表盘集成 |
-| [bookmark-feature-plan.md](./bookmark-feature-plan.md) | 功能规格 | 书签收藏：URL 协议白名单校验、自由分类、前端过滤 |
+| [bookmark-feature-plan.md](./bookmark-feature-plan.md) | 功能规格 | 书签收藏：URL 协议白名单校验、自由分类、前端过滤；第六章增强（favicon.im 图标、fetch-meta 标题抓取）已实现 |
 | [kanban-feature-plan.md](./kanban-feature-plan.md) | 功能规格 | 任务看板：status 三态改造、迁移脚本、原生拖拽方案 |
 | [note-feature-plan.md](./note-feature-plan.md) | 功能规格 | 便签：Note 模型、色板约定、置顶排序方案 |
 | [notes-optimization.md](./notes-optimization.md) | 优化清单 | 便签体验优化建议（已全部落地，含决策记录） |
@@ -296,6 +297,16 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 |------|------|------|
 | POST | `/api/pomodoro/sessions` | `{todoId?}`，记录一个 25 分钟专注会话 |
 | GET | `/api/pomodoro/summary` | `{todayCount, recent ≤10}` |
+
+**书签 `/api/bookmark`**（均需认证）
+
+| 方法 | 路径 | 请求体/参数 | 说明 |
+|------|------|-------------|------|
+| GET | `/api/bookmark/list` | - | 本人书签，按 `createdAt` 倒序，data 为 `{list}`；搜索/分类筛选由前端过滤 |
+| POST | `/api/bookmark` | `{url, title?, category?, note?}` | 新增，title 留空落库 null（前端域名兜底），category 默认"未分类" |
+| PUT | `/api/bookmark/{id}` | `{url?, title?, category?, note?}` | 可选字段更新，title/note 空串落库为 null |
+| DELETE | `/api/bookmark/{id}` | - | 删除 |
+| GET | `/api/bookmark/fetch-meta?url=` | - | 抓取目标网页 `<title>`/`og:title` 供新增书签预填；抓取失败恒 `code=0 + title=null`（非业务错误） |
 
 ## 七、版本管理规范
 

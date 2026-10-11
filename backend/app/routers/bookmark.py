@@ -1,10 +1,14 @@
 """
-书签收藏路由：列表 / 新增 / 编辑 / 删除
+书签收藏路由：列表 / 新增 / 编辑 / 删除 / 抓取网页标题
 
 统一响应格式：{ code: 0, message, data }
 业务错误通过 code != 0 表达，HTTP 状态码保持 200。
 所有接口均需登录，且只能操作本人数据。列表一次拉全，搜索/分类筛选由前端过滤。
 """
+import html
+import re
+
+import httpx
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -29,6 +33,77 @@ from ..validators import (
 router = APIRouter(prefix="/api/bookmark", tags=["bookmark"])
 
 CATEGORY_MAX = 50
+
+# fetch-meta 抓取限制：5 秒超时、最多读取 512KB（够解析 head 即可）
+FETCH_TIMEOUT = 5.0
+FETCH_MAX_BYTES = 512 * 1024
+FETCH_TITLE_MAX = 200
+
+TITLE_PATTERN = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
+OG_TITLE_PATTERNS = (
+    re.compile(
+        r"""<meta[^>]+property=["']og:title["'][^>]*content=["']([^"']*)["']""",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"""<meta[^>]+content=["']([^"']*)["'][^>]*property=["']og:title["']""",
+        re.IGNORECASE,
+    ),
+)
+
+
+def _clean_title(raw: str) -> str:
+    """去除标签、反转义 HTML 实体、压缩空白并截断。"""
+    text = re.sub(r"<[^>]+>", " ", raw)
+    text = html.unescape(text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:FETCH_TITLE_MAX]
+
+
+def _extract_title(page_text: str) -> str | None:
+    """解析优先级：<title> 文本 → <meta property="og:title">。"""
+    match = TITLE_PATTERN.search(page_text)
+    if match:
+        title = _clean_title(match.group(1))
+        if title:
+            return title
+    for pattern in OG_TITLE_PATTERNS:
+        match = pattern.search(page_text)
+        if match:
+            title = _clean_title(match.group(1))
+            if title:
+                return title
+    return None
+
+
+@router.get("/fetch-meta", response_model=ApiResponse)
+def fetch_bookmark_meta(url: str, current_user: User = Depends(get_current_user)):
+    """抓取目标网页标题供新增书签预填。
+
+    抓取失败不是业务错误：一律 code=0 + title=null，前端保持域名兜底。
+    """
+    err = validate_bookmark_url(url)
+    if err:
+        return ApiResponse(code=BIZ_CODE["BOOKMARK_URL_INVALID"], message=err)
+
+    title = None
+    try:
+        with httpx.Client(follow_redirects=True, timeout=FETCH_TIMEOUT) as client:
+            with client.stream("GET", url.strip()) as resp:
+                chunks = []
+                total = 0
+                for chunk in resp.iter_bytes():
+                    chunks.append(chunk)
+                    total += len(chunk)
+                    if total >= FETCH_MAX_BYTES:
+                        break
+                body = b"".join(chunks)[:FETCH_MAX_BYTES]
+                page_text = body.decode(resp.encoding or "utf-8", errors="replace")
+        title = _extract_title(page_text)
+    except Exception:
+        title = None
+
+    return ApiResponse(code=0, message="OK", data={"title": title})
 
 
 @router.get("/list", response_model=ApiResponse)
