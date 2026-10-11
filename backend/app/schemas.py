@@ -66,6 +66,21 @@ class PomodoroSessionRequest(BaseModel):
     todoId: int | None = Field(None, description="关联待办（可选）")
 
 
+# ---------- Bookmark ----------
+class BookmarkCreateRequest(BaseModel):
+    url: str = Field(..., description="书签 URL（http/https）")
+    title: str | None = Field(None, description="标题（可选，留空显示域名）")
+    category: str = Field("未分类", description="分类")
+    note: str | None = Field(None, description="备注")
+
+
+class BookmarkUpdateRequest(BaseModel):
+    url: str | None = Field(None, description="书签 URL")
+    title: str | None = Field(None, description="标题")
+    category: str | None = Field(None, description="分类")
+    note: str | None = Field(None, description="备注")
+
+
 # ---------- Note ----------
 class NoteCreateRequest(BaseModel):
     content: str = Field(..., description="便签内容")

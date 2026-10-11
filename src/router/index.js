@@ -60,7 +60,13 @@ const routes = [
         name: 'Notes',
         component: () => import('@/views/notes.vue'),
         meta: { title: '便签' }
-      }
+      },
+      {
+        path: 'bookmarks',
+        name: 'Bookmarks',
+        component: () => import('@/views/bookmarks.vue'),
+        meta: { title: '书签收藏' }
+      },
     ]
   },
   {

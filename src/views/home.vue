@@ -97,7 +97,7 @@
 <script setup>
 import { computed, markRaw, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Tickets, Grid, Memo, Calendar, Finished, Timer } from '@element-plus/icons-vue'
+import { Tickets, Grid, Memo, Calendar, Finished, Timer, Collection } from '@element-plus/icons-vue'
 import { getDashboardApi } from '@/api/dashboard'
 import { NOTE_COLORS } from '@/api/note'
 import { useUnauthorizedHandler } from '@/composables/useAuth'
@@ -116,7 +116,8 @@ const dash = reactive({
   scheduleCount: 0,
   todaySchedules: [],
   habit: { total: 0, doneToday: 0 },
-  pomodoro: { todayCount: 0 }
+  pomodoro: { todayCount: 0 },
+  bookmark: { total: 0 }
 })
 
 const statusText = (status) =>
@@ -162,6 +163,11 @@ const entries = computed(() => [
     path: '/pomodoro', title: '番茄钟', icon: markRaw(Timer),
     color: '#1dc981', soft: '#e5fff2',
     summary: `今日 ${dash.pomodoro.todayCount} 个专注`
+  },
+  {
+    path: '/bookmarks', title: '书签收藏', icon: markRaw(Collection),
+    color: '#909399', soft: '#f0f1f4',
+    summary: `共 ${dash.bookmark.total} 条书签`
   }
 ])
 

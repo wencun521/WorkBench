@@ -9,6 +9,7 @@ Schedule 表：id, user_id, title, date, start, end, all_day, note, created_at
 Habit 表：id, user_id, name, color, created_at
 HabitCheckin 表：id, habit_id, user_id, date, created_at（habit_id+date 唯一）
 PomodoroSession 表：id, user_id, todo_id, todo_title, duration_minutes, date, created_at
+Bookmark 表：id, user_id, title, url, category, note, created_at
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Index, UniqueConstraint
@@ -172,5 +173,31 @@ class PomodoroSession(Base):
             "todoTitle": self.todo_title,
             "durationMinutes": self.duration_minutes,
             "date": self.date,
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class Bookmark(Base):
+    __tablename__ = "bookmarks"
+    __table_args__ = (
+        Index("ix_bookmarks_user_created", "user_id", "created_at"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # title 可空：展示层用 url 提取域名兜底
+    title = Column(String(100), nullable=True)
+    url = Column(String(500), nullable=False)
+    category = Column(String(50), nullable=False, default="未分类")
+    note = Column(String(200), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "url": self.url,
+            "category": self.category,
+            "note": self.note or "",
             "createdAt": self.created_at.isoformat() if self.created_at else None,
         }

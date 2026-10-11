@@ -16,6 +16,7 @@ from ..crud import (
     list_schedules_by_date,
     count_habits_done_on,
     today_pomodoro_count,
+    list_bookmarks,
 )
 from ..deps import get_current_user
 from ..models import User
@@ -33,6 +34,7 @@ def get_dashboard(
     todos = list_todos(db, current_user.id)
     notes = list_notes(db, current_user.id)
     schedules = list_schedules_by_date(db, current_user.id, today)
+    bookmarks = list_bookmarks(db, current_user.id)
     habits_done, habits_total = count_habits_done_on(db, current_user.id, today)
     pomodoros_today = today_pomodoro_count(db, current_user.id, today)
 
@@ -68,5 +70,6 @@ def get_dashboard(
             ],
             "habit": {"total": habits_total, "doneToday": habits_done},
             "pomodoro": {"todayCount": pomodoros_today},
+            "bookmark": {"total": len(bookmarks)},
         },
     }

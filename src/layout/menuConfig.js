@@ -4,7 +4,7 @@
  * 新增模块：在对应分组的 children 加一项，或新增分组，即可上线。
  * children 为 null 的项渲染为无分组的独立菜单项。
  */
-import { HomeFilled, Tickets, Grid, Calendar, Memo, Timer, Finished } from '@element-plus/icons-vue'
+import { HomeFilled, Tickets, Grid, Calendar, Memo, Timer, Finished, Collection } from '@element-plus/icons-vue'
 
 export const MENU_GROUPS = [
   {
@@ -27,7 +27,8 @@ export const MENU_GROUPS = [
     title: '记录',
     children: [
       { path: '/notes', title: '便签', icon: Memo },
-      { path: '/habits', title: '习惯打卡', icon: Finished }
+      { path: '/habits', title: '习惯打卡', icon: Finished },
+      { path: '/bookmarks', title: '书签收藏', icon: Collection }
     ]
   }
 ]

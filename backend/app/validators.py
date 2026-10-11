@@ -6,6 +6,7 @@
 """
 import re
 from datetime import datetime
+from urllib.parse import urlparse
 
 # 业务错误码（与前端 src/api/user.js 中的 BIZ_CODE 对齐）
 BIZ_CODE = {
@@ -29,6 +30,9 @@ BIZ_CODE = {
     "HABIT_NAME_INVALID": 40010,
     "HABIT_COLOR_INVALID": 40011,
     "HABIT_NOT_FOUND": 40405,
+    "BOOKMARK_TITLE_INVALID": 40012,
+    "BOOKMARK_URL_INVALID": 40013,
+    "BOOKMARK_NOT_FOUND": 40406,
 }
 
 # 便签允许的颜色（与前端 notes.vue 的色板一致）
@@ -132,4 +136,33 @@ def validate_habit_name(name: str) -> str:
         return "请输入习惯名称"
     if len(name.strip()) > 50:
         return "习惯名称不能超过 50 个字符"
+    return ""
+
+
+def validate_bookmark_url(url: str) -> str:
+    """书签 URL 校验（仅允许 http/https）：返回错误信息，空字符串表示校验通过。"""
+    if not url or not url.strip():
+        return "请输入书签 URL"
+    url = url.strip()
+    if len(url) > 500:
+        return "URL 长度不能超过 500 个字符"
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        return "URL 仅支持 http/https 协议"
+    if not parsed.netloc or " " in parsed.netloc:
+        return "URL 格式不正确"
+    return ""
+
+
+def validate_bookmark_title(title: str | None) -> str:
+    """书签标题校验（可空，域名兜底）：返回错误信息，空字符串表示校验通过。"""
+    if title and len(title.strip()) > 100:
+        return "书签标题不能超过 100 个字符"
+    return ""
+
+
+def validate_bookmark_note(note: str | None) -> str:
+    """书签备注校验（可空）：返回错误信息，空字符串表示校验通过。"""
+    if note and len(note.strip()) > 200:
+        return "备注不能超过 200 个字符"
     return ""

@@ -43,6 +43,7 @@
 | 侧边栏布局 | 可折叠侧边栏（配置驱动分组菜单）+ 主内容区 | 2026-10-09 |
 | 首页统计 | 欢迎卡 + 待办统计（总数/已完成/未完成）+ 最近便签速览 | 2026-10-09 |
 | 便签 `/notes` | 增删改查 + 4 色标记 + 置顶，本人数据隔离 | 2026-10-09 |
+| 书签收藏 `/bookmarks` | 链接 + 自由分类 + 前端搜索，http/https 协议白名单，本人数据隔离 | 2026-10-11 |
 
 ## 二、整体架构说明
 
@@ -183,6 +184,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | [schedule-feature-plan.md](./schedule-feature-plan.md) | 功能规格 | 日程日历：Schedule 模型、el-calendar 月视图、当日列表 |
 | [habit-feature-plan.md](./habit-feature-plan.md) | 功能规格 | 习惯打卡：双表模型、streak 后端口径、幂等打卡 |
 | [pomodoro-feature-plan.md](./pomodoro-feature-plan.md) | 功能规格 | 番茄钟：会话快照模型、WebAudio 提示、仪表盘集成 |
+| [bookmark-feature-plan.md](./bookmark-feature-plan.md) | 功能规格 | 书签收藏：URL 协议白名单校验、自由分类、前端过滤 |
 | [kanban-feature-plan.md](./kanban-feature-plan.md) | 功能规格 | 任务看板：status 三态改造、迁移脚本、原生拖拽方案 |
 | [note-feature-plan.md](./note-feature-plan.md) | 功能规格 | 便签：Note 模型、色板约定、置顶排序方案 |
 | [notes-optimization.md](./notes-optimization.md) | 优化清单 | 便签体验优化建议（已全部落地，含决策记录） |
@@ -213,6 +215,8 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | 40009 | SCHEDULE_DATE_INVALID | 日程日期/时间非法（格式错误、日期不存在、结束早于开始） |
 | 40010 | HABIT_NAME_INVALID | 习惯名称非法（非空，≤50 字） |
 | 40011 | HABIT_COLOR_INVALID | 习惯颜色非法（须在 4 色白名单内） |
+| 40012 | BOOKMARK_TITLE_INVALID | 书签标题/备注/分类非法（超长） |
+| 40013 | BOOKMARK_URL_INVALID | 书签 URL 非法（仅 http/https，≤500 字符） |
 | 40006 | NOTE_CONTENT_INVALID | 便签内容/颜色非法（内容非空 ≤500 字；颜色需在白名单内） |
 | 40100 | UNAUTHORIZED | 未登录或 token 已过期 |
 | 40101 | PASSWORD_INCORRECT | 用户名或密码错误 |
@@ -221,6 +225,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | 40403 | NOTE_NOT_FOUND | 便签不存在（含非本人，防泄露） |
 | 40404 | SCHEDULE_NOT_FOUND | 日程不存在（含非本人，防泄露） |
 | 40405 | HABIT_NOT_FOUND | 习惯不存在（含非本人，防泄露） |
+| 40406 | BOOKMARK_NOT_FOUND | 书签不存在（含非本人，防泄露） |
 | 40901 | USERNAME_EXISTS | 用户名已存在 |
 | 40902 | EMAIL_EXISTS | 邮箱已被注册 |
 

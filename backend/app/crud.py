@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from .models import User, Todo, Note, Schedule, Habit, HabitCheckin, PomodoroSession
+from .models import User, Todo, Note, Schedule, Habit, HabitCheckin, PomodoroSession, Bookmark
 from .auth import hash_password
 
 
@@ -285,3 +285,49 @@ def recent_pomodoro_sessions(db: Session, user_id: int, limit: int = 10) -> list
         .limit(limit)
         .all()
     )
+
+
+# ---------- Bookmark ----------
+def create_bookmark(
+    db: Session, user_id: int, url: str,
+    title: str | None = None, category: str = "未分类", note: str | None = None,
+) -> Bookmark:
+    bookmark = Bookmark(
+        user_id=user_id, url=url, title=title, category=category, note=note
+    )
+    db.add(bookmark)
+    db.commit()
+    db.refresh(bookmark)
+    return bookmark
+
+
+def list_bookmarks(db: Session, user_id: int) -> list[Bookmark]:
+    return (
+        db.query(Bookmark)
+        .filter(Bookmark.user_id == user_id)
+        .order_by(Bookmark.created_at.desc())
+        .all()
+    )
+
+
+def get_bookmark_by_id(db: Session, user_id: int, bookmark_id: int) -> Bookmark | None:
+    # 强制限定 user_id：不存在与非本人统一按不存在处理，防泄露
+    return (
+        db.query(Bookmark)
+        .filter(Bookmark.id == bookmark_id, Bookmark.user_id == user_id)
+        .first()
+    )
+
+
+def update_bookmark(db: Session, bookmark: Bookmark, **fields) -> Bookmark:
+    for key, value in fields.items():
+        if value is not None:
+            setattr(bookmark, key, value)
+    db.commit()
+    db.refresh(bookmark)
+    return bookmark
+
+
+def delete_bookmark(db: Session, bookmark: Bookmark) -> None:
+    db.delete(bookmark)
+    db.commit()
