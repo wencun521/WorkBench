@@ -20,8 +20,11 @@
         >
           <!-- 列头 -->
           <div class="column-header">
+            <span class="column-icon" :style="{ background: col.theme.soft, color: col.theme.color }">
+              <el-icon :size="13"><component :is="col.theme.icon" /></el-icon>
+            </span>
             <span class="column-title">{{ col.title }}</span>
-            <span class="column-count">{{ col.list.length }}</span>
+            <span class="column-count" :style="{ background: col.theme.soft, color: col.theme.color }">{{ col.list.length }}</span>
             <el-icon class="add-btn" :size="16" title="新增" @click="toggleAdd(col.key)">
               <Plus />
             </el-icon>
@@ -47,6 +50,7 @@
               :key="todo.id"
               class="kanban-item"
               :class="{ dragging: draggingId === todo.id, done: todo.status === 'done' }"
+              :style="{ borderLeftColor: statusColor(todo.status) }"
               draggable="true"
               @dragstart="handleDragStart($event, todo)"
               @dragend="handleDragEnd"
@@ -102,9 +106,9 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, markRaw, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, EditPen, Delete } from '@element-plus/icons-vue'
+import { Plus, EditPen, Delete, Clock, Loading, CircleCheck } from '@element-plus/icons-vue'
 import {
   BIZ_CODE,
   TODO_STATUSES,
@@ -121,11 +125,21 @@ const loading = ref(false)
 const saving = ref(false)
 const todoList = ref([])
 
+/* 三列主题（图标 + 主色 + 浅底），主色沿用 Element Plus 语义色系 */
+const COLUMN_THEME = {
+  todo: { icon: markRaw(Clock), color: '#909399', soft: '#F0F1F4' },
+  doing: { icon: markRaw(Loading), color: '#E6A23C', soft: '#FBF0DC' },
+  done: { icon: markRaw(CircleCheck), color: '#67C23A', soft: '#EAF4E3' }
+}
+
+const statusColor = (status) => COLUMN_THEME[status]?.color || '#909399'
+
 /* 三列定义 + 按状态分组 */
 const columns = computed(() =>
   TODO_STATUSES.map((s) => ({
     key: s.value,
     title: s.title,
+    theme: COLUMN_THEME[s.value],
     list: todoList.value
       .filter((t) => t.status === s.value)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -330,12 +344,23 @@ onMounted(fetchList)
 }
 .kanban-column.drop-target {
   border-color: #409eff;
+  border-style: solid;
   background: #ecf5ff;
+  box-shadow: inset 0 0 0 1px rgba(64, 158, 255, 0.35);
 }
 .column-header {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.column-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 .column-title {
   font-size: 14px;
@@ -344,8 +369,7 @@ onMounted(fetchList)
 }
 .column-count {
   font-size: 12px;
-  color: #909399;
-  background: #e8e9eb;
+  font-weight: 600;
   border-radius: 8px;
   padding: 1px 8px;
 }
@@ -373,24 +397,46 @@ onMounted(fetchList)
 /* 卡片 */
 .kanban-item {
   background: #fff;
+  border-left: 3px solid #909399;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 13px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   cursor: grab;
-  transition: box-shadow 0.2s, opacity 0.2s;
+  transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
 }
 .kanban-item:hover {
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 .kanban-item:active {
   cursor: grabbing;
 }
 .kanban-item.dragging {
-  opacity: 0.4;
+  opacity: 0.45;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+.kanban-item.done {
+  background: #fafbfc;
 }
 .kanban-item.done .item-title {
   text-decoration: line-through;
   color: #c0c4cc;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kanban-item {
+    animation: item-in 150ms ease;
+  }
+  @keyframes item-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 .item-title {
   margin: 0;
