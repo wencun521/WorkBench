@@ -8,7 +8,7 @@
       </transition>
     </div>
 
-    <!-- 导航菜单 -->
+    <!-- 导航菜单：配置驱动分组（见 menuConfig.js） -->
     <el-menu
       class="menu"
       :default-active="route.path"
@@ -16,22 +16,13 @@
       :collapse-transition="false"
       :router="true"
     >
-      <el-menu-item index="/">
-        <el-icon><HomeFilled /></el-icon>
-        <template #title>首页</template>
-      </el-menu-item>
-      <el-menu-item index="/todo">
-        <el-icon><Tickets /></el-icon>
-        <template #title>待办事项</template>
-      </el-menu-item>
-      <el-menu-item index="/kanban">
-        <el-icon><Grid /></el-icon>
-        <template #title>任务看板</template>
-      </el-menu-item>
-      <el-menu-item index="/notes">
-        <el-icon><Memo /></el-icon>
-        <template #title>便签</template>
-      </el-menu-item>
+      <template v-for="group in MENU_GROUPS" :key="group.key">
+        <div v-if="group.title && !collapsed" class="group-title">{{ group.title }}</div>
+        <el-menu-item v-for="item in group.children" :key="item.path" :index="item.path">
+          <el-icon><component :is="item.icon" /></el-icon>
+          <template #title>{{ item.title }}</template>
+        </el-menu-item>
+      </template>
     </el-menu>
 
     <!-- 底部：折叠按钮 + 用户区 -->
@@ -60,8 +51,9 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { HomeFilled, Tickets, Grid, Memo, Platform, Expand, Fold, SwitchButton } from '@element-plus/icons-vue'
+import { Platform, Expand, Fold, SwitchButton } from '@element-plus/icons-vue'
 import { useLogout } from '@/composables/useAuth'
+import { MENU_GROUPS } from './menuConfig'
 
 defineProps({
   collapsed: {
@@ -116,6 +108,13 @@ const logout = useLogout()
 .menu {
   flex: 1;
   border-right: none;
+}
+.group-title {
+  padding: 14px 20px 4px;
+  font-size: 12px;
+  color: #c0c4cc;
+  white-space: nowrap;
+  user-select: none;
 }
 .sidebar-footer {
   display: flex;

@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from .models import User, Todo, Note
+from .models import User, Todo, Note, Schedule
 from .auth import hash_password
 
 
@@ -112,4 +112,62 @@ def update_note(db: Session, note: Note, **fields) -> Note:
 
 def delete_note(db: Session, note: Note) -> None:
     db.delete(note)
+    db.commit()
+
+
+# ---------- Schedule ----------
+def create_schedule(
+    db: Session, user_id: int, title: str, date: str,
+    start: str | None, end: str | None, all_day: bool, note: str = ""
+) -> Schedule:
+    schedule = Schedule(
+        user_id=user_id, title=title, date=date,
+        start=start, end=end, all_day=all_day, note=note,
+    )
+    db.add(schedule)
+    db.commit()
+    db.refresh(schedule)
+    return schedule
+
+
+def list_schedules(
+    db: Session, user_id: int, start: str | None = None, end: str | None = None
+) -> list[Schedule]:
+    query = db.query(Schedule).filter(Schedule.user_id == user_id)
+    if start:
+        query = query.filter(Schedule.date >= start)
+    if end:
+        query = query.filter(Schedule.date <= end)
+    # 先按日期升序，同日内按开始时间排序（全天日程排最前：start 为空字典序最小）
+    return query.order_by(Schedule.date.asc(), Schedule.start.asc()).all()
+
+
+def list_schedules_by_date(db: Session, user_id: int, date: str) -> list[Schedule]:
+    return (
+        db.query(Schedule)
+        .filter(Schedule.user_id == user_id, Schedule.date == date)
+        .order_by(Schedule.start.asc())
+        .all()
+    )
+
+
+def get_schedule_by_id(db: Session, user_id: int, schedule_id: int) -> Schedule | None:
+    # 强制限定 user_id：不存在与非本人统一按不存在处理，防泄露
+    return (
+        db.query(Schedule)
+        .filter(Schedule.id == schedule_id, Schedule.user_id == user_id)
+        .first()
+    )
+
+
+def update_schedule(db: Session, schedule: Schedule, **fields) -> Schedule:
+    for key, value in fields.items():
+        setattr(schedule, key, value)
+    db.commit()
+    db.refresh(schedule)
+    return schedule
+
+
+def delete_schedule(db: Session, schedule: Schedule) -> None:
+    db.delete(schedule)
     db.commit()

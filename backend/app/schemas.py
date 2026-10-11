@@ -31,6 +31,25 @@ class TodoUpdateRequest(BaseModel):
     status: str | None = Field(None, description="任务状态（todo/doing/done）")
 
 
+# ---------- Schedule ----------
+class ScheduleCreateRequest(BaseModel):
+    title: str = Field(..., description="日程标题")
+    date: str = Field(..., description="日期（YYYY-MM-DD）")
+    start: str | None = Field(None, description="开始时间（HH:MM，全天为空）")
+    end: str | None = Field(None, description="结束时间（HH:MM）")
+    allDay: bool = Field(False, description="是否全天")
+    note: str = Field("", description="备注")
+
+
+class ScheduleUpdateRequest(BaseModel):
+    title: str | None = Field(None, description="日程标题")
+    date: str | None = Field(None, description="日期（YYYY-MM-DD）")
+    start: str | None = Field(None, description="开始时间（HH:MM）")
+    end: str | None = Field(None, description="结束时间（HH:MM）")
+    allDay: bool | None = Field(None, description="是否全天")
+    note: str | None = Field(None, description="备注")
+
+
 # ---------- Note ----------
 class NoteCreateRequest(BaseModel):
     content: str = Field(..., description="便签内容")

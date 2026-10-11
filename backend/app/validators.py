@@ -5,6 +5,7 @@
 确保前后端校验口径统一。
 """
 import re
+from datetime import datetime
 
 # 业务错误码（与前端 src/api/user.js 中的 BIZ_CODE 对齐）
 BIZ_CODE = {
@@ -22,6 +23,9 @@ BIZ_CODE = {
     "TODO_STATUS_INVALID": 40007,
     "NOTE_CONTENT_INVALID": 40006,
     "NOTE_NOT_FOUND": 40403,
+    "SCHEDULE_TITLE_INVALID": 40008,
+    "SCHEDULE_DATE_INVALID": 40009,
+    "SCHEDULE_NOT_FOUND": 40404,
 }
 
 # 便签允许的颜色（与前端 notes.vue 的色板一致）
@@ -33,6 +37,8 @@ TODO_STATUSES = ("todo", "doing", "done")
 # 校验规则
 USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
 EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+TIME_PATTERN = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
 def validate_username(username: str) -> str:
@@ -75,6 +81,33 @@ def validate_todo_status(status: str) -> str:
     """Todo 状态校验：返回错误信息，空字符串表示校验通过。"""
     if status not in TODO_STATUSES:
         return "待办状态不合法"
+    return ""
+
+
+def validate_schedule_title(title: str) -> str:
+    """日程标题校验：返回错误信息，空字符串表示校验通过。"""
+    if not title or not title.strip():
+        return "请输入日程标题"
+    if len(title.strip()) > 100:
+        return "日程标题不能超过 100 个字符"
+    return ""
+
+
+def validate_schedule_date(date: str) -> str:
+    """日程日期校验（'YYYY-MM-DD'）：返回错误信息，空字符串表示校验通过。"""
+    if not date or not DATE_PATTERN.match(date):
+        return "日期格式不正确"
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        return "日期不存在"
+    return ""
+
+
+def validate_schedule_time(time_str: str, field: str) -> str:
+    """日程时间校验（'HH:MM'）：返回错误信息，空字符串表示校验通过。"""
+    if time_str and not TIME_PATTERN.match(time_str):
+        return f"{field}格式不正确"
     return ""
 
 

@@ -38,6 +38,12 @@ const routes = [
         meta: { title: '任务看板' }
       },
       {
+        path: 'schedule',
+        name: 'Schedule',
+        component: () => import('@/views/schedule.vue'),
+        meta: { title: '日程日历' }
+      },
+      {
         path: 'notes',
         name: 'Notes',
         component: () => import('@/views/notes.vue'),

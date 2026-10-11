@@ -5,6 +5,7 @@ User 表：id, username, password_hash, email, role, created_at
 Todo 表：id, user_id, title, note, status(todo/doing/done), created_at
          completed 列已废弃（保留声明防止 INSERT 违反 NOT NULL，全链路停止读写）
 Note 表：id, user_id, content, color, pinned, created_at
+Schedule 表：id, user_id, title, date, start, end, all_day, note, created_at
 """
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Index
@@ -81,4 +82,34 @@ class Note(Base):
             "pinned": self.pinned,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class Schedule(Base):
+    __tablename__ = "schedules"
+    __table_args__ = (
+        Index("ix_schedules_user_date", "user_id", "date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String(100), nullable=False)
+    # date 存 'YYYY-MM-DD' 字符串：字典序即时间序，天然支持范围过滤
+    date = Column(String(10), nullable=False)
+    start = Column(String(5), nullable=True)  # 'HH:MM'，全天日程为空
+    end = Column(String(5), nullable=True)
+    all_day = Column(Boolean, nullable=False, default=False)
+    note = Column(String(500), nullable=True, default="")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "date": self.date,
+            "start": self.start,
+            "end": self.end,
+            "allDay": self.all_day,
+            "note": self.note or "",
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
         }

@@ -36,7 +36,9 @@
 | 用户认证 | 注册 / 登录，JWT（HS256，1 天有效期），bcrypt 密码哈希 | 2026-10-09 前 |
 | 待办事项 `/todo` | 增删改查 + 三态状态（todo/doing/done），本人数据隔离 | 2026-10-09 |
 | 任务看板 `/kanban` | 三列拖拽看板（原生 HTML5 DnD），与待办共用数据，列内新增/编辑/删除 | 2026-10-11 |
-| 侧边栏布局 | 可折叠侧边栏 + 主内容区，home 与业务页共用 Layout | 2026-10-09 |
+| 日程日历 `/schedule` | 月历 + 当日列表，日程增删改查（全天/时段），本人数据隔离 | 2026-10-11 |
+| 聚合仪表盘 `/` | 菜单分组 + 模块入口卡 + 今日概览（`/api/dashboard` 单请求聚合） | 2026-10-11 |
+| 侧边栏布局 | 可折叠侧边栏（配置驱动分组菜单）+ 主内容区 | 2026-10-09 |
 | 首页统计 | 欢迎卡 + 待办统计（总数/已完成/未完成）+ 最近便签速览 | 2026-10-09 |
 | 便签 `/notes` | 增删改查 + 4 色标记 + 置顶，本人数据隔离 | 2026-10-09 |
 
@@ -175,6 +177,8 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | [HANDBOOK.md](./HANDBOOK.md) | **主文档** | 本文档：概述/架构/规范/导航 |
 | [todo-basic-feature-plan.md](./todo-basic-feature-plan.md) | 功能规格 | 待办事项：数据模型、API 设计、认证依赖方案、验证清单 |
 | [home-sidebar-layout-plan.md](./home-sidebar-layout-plan.md) | 功能规格 | 侧边栏布局：Layout 组件拆分、嵌套路由、组合式函数 |
+| [dashboard-menu-plan.md](./dashboard-menu-plan.md) | 功能规格 | 工作台地基：菜单分组（menuConfig 配置驱动）、/api/dashboard 聚合仪表盘 |
+| [schedule-feature-plan.md](./schedule-feature-plan.md) | 功能规格 | 日程日历：Schedule 模型、el-calendar 月视图、当日列表 |
 | [kanban-feature-plan.md](./kanban-feature-plan.md) | 功能规格 | 任务看板：status 三态改造、迁移脚本、原生拖拽方案 |
 | [note-feature-plan.md](./note-feature-plan.md) | 功能规格 | 便签：Note 模型、色板约定、置顶排序方案 |
 | [notes-optimization.md](./notes-optimization.md) | 优化清单 | 便签体验优化建议（已全部落地，含决策记录） |
@@ -201,12 +205,15 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | 40004 | PASSWORD_NOT_MATCH | 两次密码不一致 |
 | 40005 | TODO_TITLE_INVALID | 待办标题非法（非空，≤100 字） |
 | 40007 | TODO_STATUS_INVALID | 待办状态非法（须为 todo/doing/done） |
+| 40008 | SCHEDULE_TITLE_INVALID | 日程标题非法（非空，≤100 字） |
+| 40009 | SCHEDULE_DATE_INVALID | 日程日期/时间非法（格式错误、日期不存在、结束早于开始） |
 | 40006 | NOTE_CONTENT_INVALID | 便签内容/颜色非法（内容非空 ≤500 字；颜色需在白名单内） |
 | 40100 | UNAUTHORIZED | 未登录或 token 已过期 |
 | 40101 | PASSWORD_INCORRECT | 用户名或密码错误 |
 | 40401 | USER_NOT_FOUND | 用户不存在 |
 | 40402 | TODO_NOT_FOUND | 待办不存在（含非本人，防泄露） |
 | 40403 | NOTE_NOT_FOUND | 便签不存在（含非本人，防泄露） |
+| 40404 | SCHEDULE_NOT_FOUND | 日程不存在（含非本人，防泄露） |
 | 40901 | USERNAME_EXISTS | 用户名已存在 |
 | 40902 | EMAIL_EXISTS | 邮箱已被注册 |
 
@@ -244,6 +251,21 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | POST | `/api/note` | `{content, color?}` | 新增，color ∈ yellow/blue/green/pink |
 | PUT | `/api/note/{id}` | `{content?, color?, pinned?}` | 更新（可选字段） |
 | DELETE | `/api/note/{id}` | - | 删除 |
+
+**日程 `/api/schedule`**（均需认证）
+
+| 方法 | 路径 | 请求体 | 说明 |
+|------|------|--------|------|
+| GET | `/api/schedule/list?start=&end=` | - | 可选月范围过滤（YYYY-MM-DD），日期升序 |
+| POST | `/api/schedule` | `{title, date, start?, end?, allDay?, note?}` | 新增，allDay=true 时忽略时间 |
+| PUT | `/api/schedule/{id}` | `{title?, date?, start?, end?, allDay?, note?}` | 可选字段更新 |
+| DELETE | `/api/schedule/{id}` | - | 删除 |
+
+**仪表盘 `/api/dashboard`**（需认证）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/dashboard` | 聚合返回：todo 统计、今日待办 ≤5、最近便签 ≤3、今日日程 ≤5、today 日期 |
 
 ## 七、版本管理规范
 
