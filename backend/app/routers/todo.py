@@ -13,7 +13,7 @@ from ..schemas import TodoCreateRequest, TodoUpdateRequest, ApiResponse
 from ..crud import create_todo, list_todos, get_todo_by_id, update_todo, delete_todo
 from ..deps import get_current_user
 from ..models import User
-from ..validators import BIZ_CODE, validate_todo_title
+from ..validators import BIZ_CODE, validate_todo_title, validate_todo_status
 
 router = APIRouter(prefix="/api/todo", tags=["todo"])
 
@@ -34,7 +34,11 @@ def add_todo(
     if err:
         return ApiResponse(code=BIZ_CODE["TODO_TITLE_INVALID"], message=err)
 
-    todo = create_todo(db, current_user.id, payload.title.strip(), payload.note.strip())
+    err = validate_todo_status(payload.status)
+    if err:
+        return ApiResponse(code=BIZ_CODE["TODO_STATUS_INVALID"], message=err)
+
+    todo = create_todo(db, current_user.id, payload.title.strip(), payload.note.strip(), payload.status)
     return ApiResponse(code=0, message="新增成功", data=todo.to_dict())
 
 
@@ -51,17 +55,23 @@ def edit_todo(
         if err:
             return ApiResponse(code=BIZ_CODE["TODO_TITLE_INVALID"], message=err)
 
+    # status 传了才校验
+    if payload.status is not None:
+        err = validate_todo_status(payload.status)
+        if err:
+            return ApiResponse(code=BIZ_CODE["TODO_STATUS_INVALID"], message=err)
+
     todo = get_todo_by_id(db, current_user.id, todo_id)
     if not todo:
         return ApiResponse(code=BIZ_CODE["TODO_NOT_FOUND"], message="待办不存在")
 
-    fields = {"title": None, "note": None, "completed": None}
+    fields = {}
     if payload.title is not None:
         fields["title"] = payload.title.strip()
     if payload.note is not None:
         fields["note"] = payload.note.strip()
-    if payload.completed is not None:
-        fields["completed"] = payload.completed
+    if payload.status is not None:
+        fields["status"] = payload.status
 
     todo = update_todo(db, todo, **fields)
     return ApiResponse(code=0, message="更新成功", data=todo.to_dict())

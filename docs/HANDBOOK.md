@@ -34,9 +34,10 @@
 | 模块 | 说明 | 上线日期 |
 |------|------|----------|
 | 用户认证 | 注册 / 登录，JWT（HS256，1 天有效期），bcrypt 密码哈希 | 2026-10-09 前 |
-| 待办事项 `/todo` | 增删改查 + 完成状态，本人数据隔离 | 2026-10-09 |
+| 待办事项 `/todo` | 增删改查 + 三态状态（todo/doing/done），本人数据隔离 | 2026-10-09 |
+| 任务看板 `/kanban` | 三列拖拽看板（原生 HTML5 DnD），与待办共用数据，列内新增/编辑/删除 | 2026-10-11 |
 | 侧边栏布局 | 可折叠侧边栏 + 主内容区，home 与业务页共用 Layout | 2026-10-09 |
-| 首页统计 | 欢迎卡 + 待办统计（总数/已完成/未完成） | 2026-10-09 |
+| 首页统计 | 欢迎卡 + 待办统计（总数/已完成/未完成）+ 最近便签速览 | 2026-10-09 |
 | 便签 `/notes` | 增删改查 + 4 色标记 + 置顶，本人数据隔离 | 2026-10-09 |
 
 ## 二、整体架构说明
@@ -174,8 +175,9 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | [HANDBOOK.md](./HANDBOOK.md) | **主文档** | 本文档：概述/架构/规范/导航 |
 | [todo-basic-feature-plan.md](./todo-basic-feature-plan.md) | 功能规格 | 待办事项：数据模型、API 设计、认证依赖方案、验证清单 |
 | [home-sidebar-layout-plan.md](./home-sidebar-layout-plan.md) | 功能规格 | 侧边栏布局：Layout 组件拆分、嵌套路由、组合式函数 |
+| [kanban-feature-plan.md](./kanban-feature-plan.md) | 功能规格 | 任务看板：status 三态改造、迁移脚本、原生拖拽方案 |
 | [note-feature-plan.md](./note-feature-plan.md) | 功能规格 | 便签：Note 模型、色板约定、置顶排序方案 |
-| [notes-optimization.md](./notes-optimization.md) | 优化清单 | 便签体验优化建议（三梯队，待排期） |
+| [notes-optimization.md](./notes-optimization.md) | 优化清单 | 便签体验优化建议（已全部落地，含决策记录） |
 
 > **维护约定**：新增功能时在 `docs/` 新建 `<feature>-plan.md` 规格文档；上线后在本文档 §1 功能表和 §5 导航表各加一行。
 
@@ -198,6 +200,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 | 40003 | EMAIL_INVALID | 邮箱格式错误 |
 | 40004 | PASSWORD_NOT_MATCH | 两次密码不一致 |
 | 40005 | TODO_TITLE_INVALID | 待办标题非法（非空，≤100 字） |
+| 40007 | TODO_STATUS_INVALID | 待办状态非法（须为 todo/doing/done） |
 | 40006 | NOTE_CONTENT_INVALID | 便签内容/颜色非法（内容非空 ≤500 字；颜色需在白名单内） |
 | 40100 | UNAUTHORIZED | 未登录或 token 已过期 |
 | 40101 | PASSWORD_INCORRECT | 用户名或密码错误 |
@@ -228,9 +231,9 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 
 | 方法 | 路径 | 请求体 | 说明 |
 |------|------|--------|------|
-| GET | `/api/todo/list` | - | 本人待办，按 `createdAt` 倒序，data 为 `{list}` |
-| POST | `/api/todo` | `{title, note?}` | 新增 |
-| PUT | `/api/todo/{id}` | `{title?, note?, completed?}` | 更新（可选字段） |
+| GET | `/api/todo/list` | - | 本人待办，按 `createdAt` 倒序，data 为 `{list}`；条目含 `status`（todo/doing/done） |
+| POST | `/api/todo` | `{title, note?, status?}` | 新增，status 默认 todo |
+| PUT | `/api/todo/{id}` | `{title?, note?, status?}` | 更新（可选字段） |
 | DELETE | `/api/todo/{id}` | - | 删除 |
 
 **便签 `/api/note`**（均需认证）

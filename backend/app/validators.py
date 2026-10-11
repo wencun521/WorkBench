@@ -19,12 +19,16 @@ BIZ_CODE = {
     "UNAUTHORIZED": 40100,
     "TODO_TITLE_INVALID": 40005,
     "TODO_NOT_FOUND": 40402,
+    "TODO_STATUS_INVALID": 40007,
     "NOTE_CONTENT_INVALID": 40006,
     "NOTE_NOT_FOUND": 40403,
 }
 
 # 便签允许的颜色（与前端 notes.vue 的色板一致）
 NOTE_COLORS = ("yellow", "blue", "green", "pink")
+
+# 待办看板允许的状态（与前端 kanban.vue 的三列一致）
+TODO_STATUSES = ("todo", "doing", "done")
 
 # 校验规则
 USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
@@ -64,6 +68,13 @@ def validate_todo_title(title: str) -> str:
         return "请输入待办标题"
     if len(title.strip()) > 100:
         return "待办标题不能超过 100 个字符"
+    return ""
+
+
+def validate_todo_status(status: str) -> str:
+    """Todo 状态校验：返回错误信息，空字符串表示校验通过。"""
+    if status not in TODO_STATUSES:
+        return "待办状态不合法"
     return ""
 
 

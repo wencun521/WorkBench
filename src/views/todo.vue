@@ -24,12 +24,12 @@
         <el-empty v-if="!loading && todoList.length === 0" description="暂无待办，快去添加一个吧" />
         <div v-for="todo in todoList" :key="todo.id" class="todo-item">
           <el-checkbox
-            :model-value="todo.completed"
+            :model-value="todo.status === 'done'"
             @change="(val) => handleToggle(todo, val)"
           >
-            <span class="todo-title" :class="{ done: todo.completed }">{{ todo.title }}</span>
+            <span class="todo-title" :class="{ done: todo.status === 'done' }">{{ todo.title }}</span>
           </el-checkbox>
-          <p v-if="todo.note" class="todo-note" :class="{ done: todo.completed }">{{ todo.note }}</p>
+          <p v-if="todo.note" class="todo-note" :class="{ done: todo.status === 'done' }">{{ todo.note }}</p>
           <p class="todo-time">{{ formatTime(todo.createdAt) }}</p>
 
           <div class="todo-actions">
@@ -131,9 +131,10 @@ const handleCreate = async () => {
   }
 }
 
-const handleToggle = async (todo, completed) => {
+const handleToggle = async (todo, val) => {
   try {
-    const res = await updateTodoApi(todo.id, { completed })
+    // 勾选 → done；取消 → todo（doing 状态取消勾选天然落回待办列）
+    const res = await updateTodoApi(todo.id, { status: val ? 'done' : 'todo' })
     Object.assign(todo, res.data)
   } catch (err) {
     if (err.code === BIZ_CODE.UNAUTHORIZED) {

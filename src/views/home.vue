@@ -61,8 +61,8 @@ const todoList = ref([])
 
 const stats = computed(() => ({
   total: todoList.value.length,
-  completed: todoList.value.filter((t) => t.completed).length,
-  pending: todoList.value.filter((t) => !t.completed).length
+  completed: todoList.value.filter((t) => t.status === 'done').length,
+  pending: todoList.value.filter((t) => t.status !== 'done').length
 }))
 
 /* 最近便签（后端已按置顶+时间排序，取前 3 条） */

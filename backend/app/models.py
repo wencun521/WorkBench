@@ -2,7 +2,8 @@
 数据模型
 
 User 表：id, username, password_hash, email, role, created_at
-Todo 表：id, user_id, title, note, completed, created_at
+Todo 表：id, user_id, title, note, status(todo/doing/done), created_at
+         completed 列已废弃（保留声明防止 INSERT 违反 NOT NULL，全链路停止读写）
 Note 表：id, user_id, content, color, pinned, created_at
 """
 from datetime import datetime
@@ -42,6 +43,8 @@ class Todo(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String(100), nullable=False)
     note = Column(String(500), nullable=True, default="")
+    # 三态任务状态；completed 为废弃列，仅保留声明（原表无 SQL DEFAULT，删声明会破坏 INSERT）
+    status = Column(String(10), nullable=False, default="todo")
     completed = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -50,7 +53,7 @@ class Todo(Base):
             "id": self.id,
             "title": self.title,
             "note": self.note or "",
-            "completed": self.completed,
+            "status": self.status,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
         }
 

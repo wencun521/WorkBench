@@ -32,6 +32,12 @@ const routes = [
         meta: { title: '待办事项' }
       },
       {
+        path: 'kanban',
+        name: 'Kanban',
+        component: () => import('@/views/kanban.vue'),
+        meta: { title: '任务看板' }
+      },
+      {
         path: 'notes',
         name: 'Notes',
         component: () => import('@/views/notes.vue'),

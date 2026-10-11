@@ -11,8 +11,16 @@ import request from './request'
 export const BIZ_CODE = {
   UNAUTHORIZED: 40100,
   TODO_TITLE_INVALID: 40005,
-  TODO_NOT_FOUND: 40402
+  TODO_NOT_FOUND: 40402,
+  TODO_STATUS_INVALID: 40007
 }
+
+/* ---------- 看板三态（与后端 TODO_STATUSES 一致） ---------- */
+export const TODO_STATUSES = [
+  { value: 'todo', title: '待办' },
+  { value: 'doing', title: '进行中' },
+  { value: 'done', title: '已完成' }
+]
 
 /**
  * 待办列表
@@ -24,17 +32,17 @@ export async function listTodoApi() {
 
 /**
  * 新增待办
- * @param {{ title: string, note?: string }} payload
+ * @param {{ title: string, note?: string, status?: string }} payload
  * @returns {Promise<{ code: 0, message: string, data: object }>}
  */
-export async function createTodoApi({ title, note = '' }) {
-  return request.post('/todo', { title, note })
+export async function createTodoApi({ title, note = '', status = 'todo' }) {
+  return request.post('/todo', { title, note, status })
 }
 
 /**
- * 更新待办（标题 / 备注 / 完成状态，均可选传）
+ * 更新待办（标题 / 备注 / 状态，均可选传）
  * @param {number} id
- * @param {{ title?: string, note?: string, completed?: boolean }} payload
+ * @param {{ title?: string, note?: string, status?: string }} payload
  * @returns {Promise<{ code: 0, message: string, data: object }>}
  */
 export async function updateTodoApi(id, payload) {

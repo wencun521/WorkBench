@@ -31,8 +31,8 @@ def create_user(db: Session, username: str, password: str, email: str, role: str
 
 
 # ---------- Todo ----------
-def create_todo(db: Session, user_id: int, title: str, note: str = "") -> Todo:
-    todo = Todo(user_id=user_id, title=title, note=note)
+def create_todo(db: Session, user_id: int, title: str, note: str = "", status: str = "todo") -> Todo:
+    todo = Todo(user_id=user_id, title=title, note=note, status=status)
     db.add(todo)
     db.commit()
     db.refresh(todo)

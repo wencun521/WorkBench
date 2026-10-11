@@ -22,12 +22,13 @@ class RegisterRequest(BaseModel):
 class TodoCreateRequest(BaseModel):
     title: str = Field(..., description="待办标题")
     note: str = Field("", description="备注（可选）")
+    status: str = Field("todo", description="任务状态（可选，默认 todo）")
 
 
 class TodoUpdateRequest(BaseModel):
     title: str | None = Field(None, description="待办标题")
     note: str | None = Field(None, description="备注")
-    completed: bool | None = Field(None, description="完成状态")
+    status: str | None = Field(None, description="任务状态（todo/doing/done）")
 
 
 # ---------- Note ----------
