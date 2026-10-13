@@ -44,7 +44,7 @@ from .validators import BIZ_CODE
 # 创建所有表（首次启动时自动建表）
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Admin Pro Backend", version="0.1.0")
+app = FastAPI(title="FlowDesk Backend", version="0.1.0")
 
 # CORS：允许前端开发服务器跨域访问
 app.add_middleware(

@@ -1,6 +1,6 @@
-# Admin Pro
+# FlowDesk
 
-轻量级全栈后台管理系统 —— Vue 3 + FastAPI + SQLite。
+轻量级个人工作台应用 —— Vue 3 + FastAPI + SQLite。
 
 ![version](https://img.shields.io/badge/version-0.1.0-blue) ![vue](https://img.shields.io/badge/Vue-3.5-42b883) ![fastapi](https://img.shields.io/badge/FastAPI-latest-009688) ![license](https://img.shields.io/badge/license-private-lightgrey)
 

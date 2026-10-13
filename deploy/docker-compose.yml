@@ -1,0 +1,16 @@
+# 后端 API 容器编排（前端由宿主机 Nginx 托管，不在此管理）
+# 使用前先创建 JWT 密钥文件：
+#   echo "JWT_SECRET_KEY=$(openssl rand -hex 32)" > jwt.env && chmod 600 jwt.env
+services:
+  backend:
+    build: ./backend
+    container_name: flowdesk-backend
+    restart: unless-stopped
+    ports:
+      # 仅绑定宿主机回环地址，只有本机 Nginx 能访问，不对外暴露
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - ./jwt.env
+    # SQLite 数据持久化：宿主机 ./data/app.db 挂载进容器（启动前文件必须已存在）
+    volumes:
+      - ./data/app.db:/app/app/app.db

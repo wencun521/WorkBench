@@ -2,8 +2,8 @@
   <div class="auth-card">
     <!-- 左侧品牌区 -->
     <div class="auth-brand">
-      <div class="brand-logo">A</div>
-      <h1 class="brand-title">Admin Pro</h1>
+      <div class="brand-logo">F</div>
+      <h1 class="brand-title">FlowDesk</h1>
       <p class="brand-desc">{{ desc }}</p>
       <ul class="brand-features">
         <li v-for="item in features" :key="item">{{ item }}</li>

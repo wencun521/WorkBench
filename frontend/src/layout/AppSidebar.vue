@@ -4,7 +4,7 @@
     <div class="logo-area" @click="emit('toggle')">
       <el-icon class="logo-icon" :size="24"><Platform /></el-icon>
       <transition name="fade">
-        <span v-if="!collapsed" class="logo-title">Admin Pro</span>
+        <span v-if="!collapsed" class="logo-title">FlowDesk</span>
       </transition>
     </div>
 

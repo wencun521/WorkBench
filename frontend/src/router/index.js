@@ -89,7 +89,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const hasToken = !!getToken()
   if (to.meta.title) {
-    document.title = `${to.meta.title} - Admin Pro`
+    document.title = `${to.meta.title} - FlowDesk`
   }
   if (to.meta.requiresAuth === false) {
     // 已登录用户访问登录页，直接回首页
