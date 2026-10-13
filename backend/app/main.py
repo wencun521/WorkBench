@@ -8,7 +8,7 @@ FastAPI 应用入口
     python run.py
 
 生产部署：
-    npm run build 生成根目录 dist/ 后，本应用会自动将其挂载在 /，
+    cd frontend && npm run build 生成 frontend/dist/ 后，本应用会自动将其挂载在 /，
     单进程即可同时提供前端页面与 /api 接口。
 """
 from pathlib import Path
@@ -85,11 +85,11 @@ def health_check():
     return {"status": "ok"}
 
 
-# 生产部署：若根目录存在前端打包产物 dist/，则由本应用统一对外服务。
+# 生产部署：若 frontend/dist 存在前端打包产物，则由本应用统一对外服务。
 # 注意必须在所有 API 路由注册之后执行，避免拦截 /api 与 /health。
 # SPA 回退：dist 中真实存在的文件（js/css/图标等）直接返回，
 # 其余路径（如 /bookmarks）统一返回 index.html，交给前端路由处理。
-_dist_dir = Path(__file__).resolve().parents[2] / "dist"
+_dist_dir = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _dist_dir.is_dir():
 
     @app.get("/{full_path:path}", include_in_schema=False)

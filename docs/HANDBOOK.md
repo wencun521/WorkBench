@@ -98,7 +98,7 @@ f:\code\vu1\
 │  ├─ home-sidebar-layout-plan.md      # 侧边栏布局改造规格
 │  ├─ note-feature-plan.md             # 便签功能规格
 │  └─ notes-optimization.md            # 便签优化建议（待排期）
-├─ backend/                     # FastAPI 后端
+├─ backend/                     # FastAPI 后端（虚拟环境 backend/.venv 也在此目录）
 │  ├─ run.py                    # 启动脚本（uvicorn + reload，端口 8000）
 │  ├─ requirements.txt          # Python 依赖
 │  └─ app/
@@ -115,7 +115,7 @@ f:\code\vu1\
 │        ├─ user.py             # /api/user  登录、注册
 │        ├─ todo.py             # /api/todo  待办 CRUD
 │        └─ note.py             # /api/note  便签 CRUD
-├─ src/                         # Vue 3 前端
+├─ frontend/                    # Vue 3 前端
 │  ├─ main.js                   # 入口：挂载 App、router、Element Plus
 │  ├─ App.vue                   # 根组件（仅 router-view）
 │  ├─ router/index.js           # 路由表 + 登录守卫
@@ -134,10 +134,11 @@ f:\code\vu1\
 │  │  └─ useAuth.js             # useLogout / useUnauthorizedHandler
 │  ├─ utils/auth.js             # token 存取（localStorage）
 │  └─ styles/global.css         # 全局样式（reset + 灰底基调）
-├─ public/                      # 静态资源（favicon）
-├─ index.html                   # SPA 入口
-├─ vite.config.js               # Vite 配置（/api 代理 → 127.0.0.1:8000）
-└─ package.json                 # 前端依赖与脚本
+├─ frontend/                    # （续）静态资源与构建配置
+│  ├─ public/                   # 静态资源（favicon）
+│  ├─ index.html                # SPA 入口
+│  ├─ vite.config.js            # Vite 配置（/api 代理 → 127.0.0.1:8000）
+│  └─ package.json              # 前端依赖与脚本
 ```
 
 ## 四、快速开始（开发指南）
@@ -163,6 +164,7 @@ python -m venv .venv
 ### 4.3 启动前端（端口 5173）
 
 ```bash
+cd frontend
 npm install   # 首次
 npm run dev   # 开发服务器，/api 自动代理到 8000
 ```
@@ -171,7 +173,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 
 | 命令 | 说明 |
 |------|------|
-| `npm run build` | 产出生产构建到 `dist/` |
+| `npm run build` | 产出生产构建到 `frontend/dist/` |
 | `npm run preview` | 本地预览构建产物 |
 
 ## 五、文档导航
@@ -328,7 +330,7 @@ npm run dev   # 开发服务器，/api 自动代理到 8000
 
 1. **前端构建**：`npm run build` → 产出 `dist/` 静态文件
 2. **启动后端**：`uvicorn app.main:app --host 127.0.0.1 --port 8000`（不带 `--reload`）
-   - `main.py` 末尾会自动检测根目录 `dist/` 并以 catch-all 路由托管：dist 中真实存在的文件（js/css/图标）直接返回，其余路径统一回退 `index.html`，由前端路由处理（SPA history 回退已内置，**无需 Nginx 配置 try_files**）
+   - `main.py` 末尾会自动检测 `frontend/dist/` 并以 catch-all 路由托管：dist 中真实存在的文件（js/css/图标）直接返回，其余路径统一回退 `index.html`，由前端路由处理（SPA history 回退已内置，**无需 Nginx 配置 try_files**）
    - `/api` 与 `/health` 路由注册在前，不会被 catch-all 拦截
 3. **公网部署**：前置 Nginx 处理 HTTPS/域名，将请求反代到 `127.0.0.1:8000`；后端只绑定本机回环地址，不对公网开放
 

@@ -6,18 +6,18 @@
 
 个人工作台应用（Vue3 + FastAPI 单仓全栈项目）：
 
-- **前端**：Vue 3 + Element Plus + Vue Router + Vite + Axios，位于仓库根目录 `src/`
-- **后端**：FastAPI + SQLAlchemy + SQLite，位于 `backend/`，入口 `backend/app/main.py`
+- **前端**：Vue 3 + Element Plus + Vue Router + Vite + Axios，位于 `frontend/`
+- **后端**：FastAPI + SQLAlchemy + SQLite，位于 `backend/`，入口 `backend/app/main.py`，虚拟环境 `backend/.venv`
 - **业务模块**：首页仪表盘、待办、便签、日程日历、习惯打卡、番茄钟、看板、书签收藏
 
 ## 常用命令
 
 ```bash
-# 前端开发（根目录执行）
+# 前端开发（frontend/ 目录执行）
 npm run dev        # Vite 开发服务器
-npm run build      # 构建产物输出到根目录 dist/
+npm run build      # 构建产物输出到 frontend/dist/
 
-# 后端开发（backend/ 目录执行）
+# 后端开发（backend/ 目录执行，虚拟环境位于 backend/.venv）
 uvicorn app.main:app --reload --port 8000
 # 或 python run.py
 ```
@@ -27,17 +27,21 @@ uvicorn app.main:app --reload --port 8000
 ## 目录结构
 
 ```
-src/
-  api/            # 每模块一个 API 封装文件（axios 基于 api/request.js 拦截器）
-  composables/    # 组合式函数（useAuth、usePomodoro 等）
-  layout/         # AdminLayout、AppSidebar、menuConfig.js（侧边栏菜单统一配置）
-  router/         # 路由（嵌套路由，主布局为父路由）
-  views/          # 页面组件（home、todo、notes、schedule、habits、pomodoro、kanban、bookmarks）
-backend/app/
-  main.py         # FastAPI 入口，注册路由 + SPA 回退 catch-all
-  routers/        # 每模块一个路由文件
-  models.py / schemas.py / crud.py / deps.py / auth.py / validators.py
-  database.py     # SQLite（backend/app/app.db）
+frontend/
+  src/
+    api/            # 每模块一个 API 封装文件（axios 基于 api/request.js 拦截器）
+    composables/    # 组合式函数（useAuth、usePomodoro 等）
+    layout/         # AdminLayout、AppSidebar、menuConfig.js（侧边栏菜单统一配置）
+    router/         # 路由（嵌套路由，主布局为父路由）
+    views/          # 页面组件（home、todo、notes、schedule、habits、pomodoro、kanban、bookmarks）
+  vite.config.js    # Vite 配置（/api 代理 → 8000）；构建产物输出 frontend/dist/
+backend/
+  .venv/            # Python 虚拟环境
+  app/
+    main.py         # FastAPI 入口，注册路由 + SPA 回退 catch-all（托管 frontend/dist）
+    routers/        # 每模块一个路由文件
+    models.py / schemas.py / crud.py / deps.py / auth.py / validators.py
+    database.py     # SQLite（backend/app/app.db）
 docs/             # 各模块功能设计文档 + HANDBOOK.md（完整主手册）
 ```
 
@@ -47,13 +51,13 @@ docs/             # 各模块功能设计文档 + HANDBOOK.md（完整主手册�
 
 - 接口统一返回「HTTP 恒 200 + `code` 表达业务结果」：`code === 0` 成功，非 0 为业务错误
 - 未授权也返回 HTTP 200（`code: 40100`），由前端 axios 拦截器统一处理并跳转登录，路由守卫需处理 401 场景
-- 错误码定义在后端 `backend/app/validators.py` 的 `BIZ_CODE`，需与前端 `src/api/user.js` 的 `BIZ_CODE` 对齐；**每个模块使用独立错误码区间**（4xx01/4xx02… 按模块递增）
+- 错误码定义在后端 `backend/app/validators.py` 的 `BIZ_CODE`，需与前端 `frontend/src/api/user.js` 的 `BIZ_CODE` 对齐；**每个模块使用独立错误码区间**（4xx01/4xx02… 按模块递增）
 
 ### 新增模块固定流程
 
 1. 先在 `docs/` 编写功能设计文档（`xxx-feature-plan.md`）
 2. 后端：`models.py` 建模 → `schemas.py` → `crud.py` → `routers/xxx.py` → `main.py` 注册路由 → `BIZ_CODE` 增加错误码
-3. 前端：`src/api/xxx.js` 封装接口 → `src/views/xxx.vue` 页面 → `src/router/index.js` 嵌套路由 → `src/layout/menuConfig.js` 添加一行菜单配置即可上线
+3. 前端（frontend/ 下）：`src/api/xxx.js` 封装接口 → `src/views/xxx.vue` 页面 → `src/router/index.js` 嵌套路由 → `src/layout/menuConfig.js` 添加一行菜单配置即可上线
 4. 更新 `docs/HANDBOOK.md` 与根目录 `README.md`
 
 ### 状态管理
@@ -72,7 +76,7 @@ docs/             # 各模块功能设计文档 + HANDBOOK.md（完整主手册�
 
 ### 部署
 
-- 生产模式：`npm run build` 生成根目录 `dist/`，后端通过 **catch-all 路由**（`main.py` 末尾）托管前端静态文件并实现 SPA 回退（刷新 404 问题的修复方案）
+- 生产模式：在 `frontend/` 执行 `npm run build` 生成 `frontend/dist/`，后端通过 **catch-all 路由**（`main.py` 末尾）托管前端静态文件并实现 SPA 回退（刷新 404 问题的修复方案）
 - 注意：catch-all 路由必须在所有 API 路由注册之后；不要改用 `StaticFiles` 托管 dist（会导致 SPA 刷新 404）
 - 服务器进程守护用 systemd，参考 `docs/HANDBOOK.md` 部署章节
 

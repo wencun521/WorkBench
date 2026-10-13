@@ -26,13 +26,14 @@
 ## 快速开始
 
 ```bash
-# 后端（端口 8000）
+# 后端（端口 8000，虚拟环境位于 backend/.venv）
 cd backend
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 .venv\Scripts\python run.py
 
 # 前端（端口 5173，/api 自动代理到 8000）
+cd frontend
 npm install
 npm run dev
 ```
@@ -47,7 +48,6 @@ npm run dev
 
 ```
 ├─ docs/       # 项目文档（HANDBOOK.md 为主文档入口）
-├─ backend/    # FastAPI 后端（routers / models / crud / auth ...）
-├─ src/        # Vue 3 前端（views / layout / api / composables ...）
-└─ public/     # 静态资源
+├─ backend/    # FastAPI 后端（routers / models / crud / auth ...，虚拟环境 backend/.venv）
+└─ frontend/   # Vue 3 前端（src / public / vite.config.js / package.json）
 ```
