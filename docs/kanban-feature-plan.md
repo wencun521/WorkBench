@@ -62,7 +62,7 @@
 - 侧边栏菜单加"任务看板"项（Grid 图标，index="/kanban"）
 
 ### 11. 文档
-- 本计划移入 `docs/kanban-feature-plan.md`；[README.md](file:///f:/code/vu1/README.md) 功能一览、[HANDBOOK.md](file:///f:/code/vu1/docs/HANDBOOK.md) §1 功能表 / §5 导航 / §6 接口清单（TodoUpdateRequest 变更）同步更新
+- 本计划移入 `docs/kanban-feature-plan.md`；[README.md](file:///f:/code/flowdesk/README.md) 功能一览、[HANDBOOK.md](file:///f:/code/flowdesk/docs/HANDBOOK.md) §1 功能表 / §5 导航 / §6 接口清单（TodoUpdateRequest 变更）同步更新
 
 ## 三、文件清单
 

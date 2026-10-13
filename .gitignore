@@ -63,3 +63,9 @@ venv/
 
 # Misc
 *.tsbuildinfo
+
+# 部署目录（deploy）：压缩包、数据库、运行时产物不入库
+deploy/backend.zip
+deploy/**/*.db
+deploy/data/
+deploy/jwt.env

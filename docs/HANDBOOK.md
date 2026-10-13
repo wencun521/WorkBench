@@ -91,7 +91,7 @@ Vite Dev Server ─── /api 代理 ───► FastAPI (http://127.0.0.1:800
 ## 三、目录结构索引
 
 ```
-f:\code\vu1\
+f:\code\flowdesk\
 ├─ docs/                        # 项目文档（详细导航见本目录 HANDBOOK.md）
 │  ├─ HANDBOOK.md               # ★ 项目主文档（核心导航入口）
 │  ├─ todo-basic-feature-plan.md       # 待办功能规格

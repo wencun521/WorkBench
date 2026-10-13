@@ -6,8 +6,8 @@
 
 ## Current State（现状）
 
-- 后端已有完整可复制模板：[models.py](file:///f:/code/vu1/backend/app/models.py)（Todo 模型）、[crud.py](file:///f:/code/vu1/backend/app/crud.py)、[routers/todo.py](file:///f:/code/vu1/backend/app/routers/todo.py)、[deps.py](file:///f:/code/vu1/backend/app/deps.py)（get_current_user）、[validators.py](file:///f:/code/vu1/backend/app/validators.py)（BIZ_CODE）
-- 前端已有：[api/todo.js](file:///f:/code/vu1/src/api/todo.js) 模式、[views/todo.vue](file:///f:/code/vu1/src/views/todo.vue) 页面模式、[composables/useAuth.js](file:///f:/code/vu1/src/composables/useAuth.js)（useUnauthorizedHandler）、嵌套路由 [router/index.js](file:///f:/code/vu1/src/router/index.js)、[AppSidebar.vue](file:///f:/code/vu1/src/layout/AppSidebar.vue)（el-menu 路由模式）
+- 后端已有完整可复制模板：[models.py](file:///f:/code/flowdesk/backend/app/models.py)（Todo 模型）、[crud.py](file:///f:/code/flowdesk/backend/app/crud.py)、[routers/todo.py](file:///f:/code/flowdesk/backend/app/routers/todo.py)、[deps.py](file:///f:/code/flowdesk/backend/app/deps.py)（get_current_user）、[validators.py](file:///f:/code/flowdesk/backend/app/validators.py)（BIZ_CODE）
+- 前端已有：[api/todo.js](file:///f:/code/flowdesk/src/api/todo.js) 模式、[views/todo.vue](file:///f:/code/flowdesk/src/views/todo.vue) 页面模式、[composables/useAuth.js](file:///f:/code/flowdesk/src/composables/useAuth.js)（useUnauthorizedHandler）、嵌套路由 [router/index.js](file:///f:/code/flowdesk/src/router/index.js)、[AppSidebar.vue](file:///f:/code/flowdesk/src/layout/AppSidebar.vue)（el-menu 路由模式）
 - 无迁移机制，create_all 自动建新表
 - BIZ_CODE 已占用：40001~40005、40100、40101、40401、40402、40901、40902
 

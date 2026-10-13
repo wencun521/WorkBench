@@ -6,10 +6,10 @@
 
 ## Current State（现状）
 
-- [home.vue](file:///f:/code/vu1/src/views/home.vue)：全屏居中欢迎卡 + 待办事项按钮 + 退出按钮
-- [todo.vue](file:///f:/code/vu1/src/views/todo.vue)：独立全屏卡片页，自带"返回首页"按钮和 40100 处理逻辑（handleUnauthorized 内联）
-- [router/index.js](file:///f:/code/vu1/src/router/index.js)：扁平路由 `/`、`/todo`，meta.requiresAuth + beforeEach 守卫（vue-router 4 会合并父子 meta，嵌套后守卫无需改动）
-- [App.vue](file:///f:/code/vu1/src/App.vue)：仅 router-view
+- [home.vue](file:///f:/code/flowdesk/src/views/home.vue)：全屏居中欢迎卡 + 待办事项按钮 + 退出按钮
+- [todo.vue](file:///f:/code/flowdesk/src/views/todo.vue)：独立全屏卡片页，自带"返回首页"按钮和 40100 处理逻辑（handleUnauthorized 内联）
+- [router/index.js](file:///f:/code/flowdesk/src/router/index.js)：扁平路由 `/`、`/todo`，meta.requiresAuth + beforeEach 守卫（vue-router 4 会合并父子 meta，嵌套后守卫无需改动）
+- [App.vue](file:///f:/code/flowdesk/src/App.vue)：仅 router-view
 - 依赖：Element Plus ^2.8.4 + @element-plus/icons-vue；无 pinia；用户信息未持久化（仅 token）
 - 样式基调：全局灰底 `#f5f6f8`、卡片圆角 12px
 
