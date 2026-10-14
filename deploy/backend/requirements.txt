@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-bcrypt
-python-jose[cryptography]
-pydantic
-httpx
